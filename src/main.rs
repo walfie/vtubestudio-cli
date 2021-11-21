@@ -1,6 +1,8 @@
 mod args;
 
-use crate::args::{Args, ArtmeshesCommand, Command, Config, HotkeysCommand, ParamsCommand};
+use crate::args::{
+    Args, ArtmeshesCommand, Command, Config, HotkeysCommand, ModelsCommand, ParamsCommand,
+};
 
 use anyhow::{bail, Context, Result};
 use std::path::PathBuf;
@@ -66,6 +68,10 @@ async fn main() -> Result<()> {
 
         Command::Artmeshes(command) => {
             handle_artmeshes_command(&mut client, command).await?;
+        }
+
+        Command::Models(command) => {
+            handle_models_command(&mut client, command).await?;
         }
     };
 
@@ -211,6 +217,57 @@ async fn handle_artmeshes_command(client: &mut Client, command: ArtmeshesCommand
 
                 tokio::time::sleep(req.duration).await;
             }
+        }
+    }
+
+    Ok(())
+}
+
+async fn handle_models_command(client: &mut Client, command: ModelsCommand) -> Result<()> {
+    use ModelsCommand::*;
+
+    match command {
+        List => {
+            let resp = client.send(&AvailableModelsRequest {}).await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+
+        Current => {
+            let resp = client.send(&CurrentModelRequest {}).await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+
+        Load { id, name } => {
+            let model_id = if let Some(id) = id {
+                id
+            } else if let Some(name) = name {
+                let resp = client.send(&AvailableModelsRequest {}).await?;
+
+                resp.available_models
+                    .into_iter()
+                    .find(|model| model.model_name == name)
+                    .with_context(|| format!("no model found with name `{}`", name))?
+                    .model_id
+            } else {
+                bail!("either `id` or `name` must be specified");
+            };
+
+            let resp = client.send(&ModelLoadRequest { model_id }).await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+
+        Move(req) => {
+            let resp = client
+                .send(&MoveModelRequest {
+                    time_in_seconds: req.duration.as_secs() as f64,
+                    values_are_relative_to_model: req.relative,
+                    position_x: req.x,
+                    position_y: req.y,
+                    rotation: req.rotation,
+                    size: req.size,
+                })
+                .await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
         }
     }
 

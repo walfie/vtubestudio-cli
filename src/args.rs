@@ -44,6 +44,8 @@ pub enum Command {
     Hotkeys(HotkeysCommand),
     /// Actions related to artmeshes.
     Artmeshes(ArtmeshesCommand),
+    /// Actions related to models.
+    Models(ModelsCommand),
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -170,4 +172,39 @@ impl FromStr for HexColor {
             a: a.unwrap_or(255),
         })
     }
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub enum ModelsCommand {
+    /// List available models.
+    List,
+    /// Get current model.
+    Current,
+    /// Load a model by ID or name.
+    Load {
+        /// Model ID to load.
+        #[structopt(conflicts_with = "name")]
+        id: Option<String>,
+        /// Load the first model with this name, if it exists.
+        #[structopt(long, conflicts_with = "id")]
+        name: Option<String>,
+    },
+    // Move the current model.
+    Move(MoveModel),
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub struct MoveModel {
+    #[structopt(long, parse(try_from_str = parse_duration::parse))]
+    pub duration: Duration,
+    #[structopt(long)]
+    pub relative: bool,
+    #[structopt(long)]
+    pub x: Option<f64>,
+    #[structopt(long)]
+    pub y: Option<f64>,
+    #[structopt(long)]
+    pub rotation: Option<f64>,
+    #[structopt(long)]
+    pub size: Option<f64>,
 }
