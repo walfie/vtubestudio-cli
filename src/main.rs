@@ -1,6 +1,6 @@
 mod args;
 
-use crate::args::{Args, Command, Config};
+use crate::args::{Args, Command, Config, ParamsCommand};
 
 use anyhow::{bail, Context, Result};
 use std::path::PathBuf;
@@ -54,50 +54,61 @@ async fn main() -> Result<()> {
             let resp = client.send(&StatisticsRequest {}).await?;
             println!("{}", serde_json::to_string_pretty(&resp)?);
         }
-        Command::CreateParam(req) => {
-            let resp = client
-                .send(&ParameterCreationRequest {
-                    parameter_name: req.id,
-                    explanation: req.explanation,
-                    min: req.min,
-                    max: req.max,
-                    default_value: req.default,
-                })
-                .await?;
+        Command::Params(command) => {
+            use ParamsCommand::*;
 
-            println!("{}", serde_json::to_string_pretty(&resp)?);
-        }
-        Command::Param { id } => {
-            let resp = client.send(&ParameterValueRequest { name: id }).await?;
+            match command {
+                Create(req) => {
+                    let resp = client
+                        .send(&ParameterCreationRequest {
+                            parameter_name: req.id,
+                            explanation: req.explanation,
+                            min: req.min,
+                            max: req.max,
+                            default_value: req.default,
+                        })
+                        .await?;
 
-            println!("{}", serde_json::to_string_pretty(&resp)?);
-        }
-        Command::DeleteParam { id } => {
-            let resp = client
-                .send(&ParameterDeletionRequest { parameter_name: id })
-                .await?;
+                    println!("{}", serde_json::to_string_pretty(&resp)?);
+                }
 
-            println!("{}", serde_json::to_string_pretty(&resp)?);
-        }
-        Command::SetParam(req) => {
-            let resp = client
-                .send(&InjectParameterDataRequest {
-                    parameter_values: vec![ParameterValue {
-                        id: req.id,
-                        value: req.value,
-                        weight: req.weight,
-                    }],
-                })
-                .await?;
+                Get { id } => {
+                    let resp = client.send(&ParameterValueRequest { name: id }).await?;
 
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+                    println!("{}", serde_json::to_string_pretty(&resp)?);
+                }
+
+                Delete { id } => {
+                    let resp = client
+                        .send(&ParameterDeletionRequest { parameter_name: id })
+                        .await?;
+
+                    println!("{}", serde_json::to_string_pretty(&resp)?);
+                }
+
+                Set(req) => {
+                    let resp = client
+                        .send(&InjectParameterDataRequest {
+                            parameter_values: vec![ParameterValue {
+                                id: req.id,
+                                value: req.value,
+                                weight: req.weight,
+                            }],
+                        })
+                        .await?;
+
+                    println!("{}", serde_json::to_string_pretty(&resp)?);
+                }
+            }
         }
+
         Command::Hotkeys { model_id } => {
             let resp = client
                 .send(&HotkeysInCurrentModelRequest { model_id })
                 .await?;
             println!("{}", serde_json::to_string_pretty(&resp)?);
         }
+
         Command::TriggerHotkey(req) => {
             let hotkey_id = if let Some(id) = req.id {
                 id
@@ -118,10 +129,12 @@ async fn main() -> Result<()> {
             let resp = client.send(&HotkeyTriggerRequest { hotkey_id }).await?;
             println!("{}", serde_json::to_string_pretty(&resp)?);
         }
+
         Command::Artmeshes => {
             let resp = client.send(&ArtMeshListRequest {}).await?;
             println!("{}", serde_json::to_string_pretty(&resp)?);
         }
+
         Command::Tint(req) => {
             let resp = client
                 .send(&ColorTintRequest {

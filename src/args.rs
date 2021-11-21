@@ -38,20 +38,7 @@ pub enum Command {
     Init(Config),
     /// VTube Studio statistics.
     Stats,
-    /// Get the value of a parameter.
-    Param {
-        /// Name of the parameter.
-        id: String,
-    },
-    /// Create a custom parameter.
-    CreateParam(CreateParam),
-    /// Delete a custom parameter.
-    DeleteParam {
-        /// Name of the parameter.
-        id: String,
-    },
-    /// Temporarily set the value for a custom parameter.
-    SetParam(SetParam),
+    Params(ParamsCommand),
     /// List the available hotkeys for a model.
     Hotkeys {
         /// Model ID.
@@ -64,6 +51,25 @@ pub enum Command {
     Artmeshes,
     /// Tint matching art meshes.
     Tint(Tint),
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub enum ParamsCommand {
+    /// Get the value of a parameter.
+    Get {
+        /// Name of the parameter.
+        id: String,
+    },
+    /// Create a custom parameter.
+    Create(CreateParam),
+    /// Temporarily set the value for a custom parameter.
+    ///
+    /// VTube Studio will reset this value if it hasn't been updated at least once per second.
+    Set(SetParam),
+    Delete {
+        /// Name of the parameter.
+        id: String,
+    },
 }
 
 #[derive(StructOpt, Debug, Clone)]
