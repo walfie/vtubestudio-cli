@@ -40,6 +40,8 @@ pub enum Command {
     State,
     /// VTube Studio statistics.
     Stats,
+    /// Get a list of VTube Studio folders.
+    Folders,
     /// Actions related to parameters.
     Params(ParamsCommand),
     /// Actions related to hotkeys.
