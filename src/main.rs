@@ -1,6 +1,6 @@
 mod args;
 
-use crate::args::{Args, Command, Config, ParamsCommand};
+use crate::args::{Args, Command, Config, HotkeysCommand, ParamsCommand};
 
 use anyhow::{bail, Context, Result};
 use std::path::PathBuf;
@@ -102,32 +102,38 @@ async fn main() -> Result<()> {
             }
         }
 
-        Command::Hotkeys { model_id } => {
-            let resp = client
-                .send(&HotkeysInCurrentModelRequest { model_id })
-                .await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
-        }
+        Command::Hotkeys(command) => {
+            use HotkeysCommand::*;
 
-        Command::TriggerHotkey(req) => {
-            let hotkey_id = if let Some(id) = req.id {
-                id
-            } else if let Some(name) = req.name {
-                let resp = client
-                    .send(&HotkeysInCurrentModelRequest { model_id: None })
-                    .await?;
+            match command {
+                List { model_id } => {
+                    let resp = client
+                        .send(&HotkeysInCurrentModelRequest { model_id })
+                        .await?;
+                    println!("{}", serde_json::to_string_pretty(&resp)?);
+                }
 
-                resp.available_hotkeys
-                    .into_iter()
-                    .find(|hotkey| hotkey.name == name)
-                    .with_context(|| format!("no hotkey found with name `{}`", name))?
-                    .hotkey_id
-            } else {
-                bail!("either `id` or `name` must be specified");
-            };
+                Trigger(req) => {
+                    let hotkey_id = if let Some(id) = req.id {
+                        id
+                    } else if let Some(name) = req.name {
+                        let resp = client
+                            .send(&HotkeysInCurrentModelRequest { model_id: None })
+                            .await?;
 
-            let resp = client.send(&HotkeyTriggerRequest { hotkey_id }).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+                        resp.available_hotkeys
+                            .into_iter()
+                            .find(|hotkey| hotkey.name == name)
+                            .with_context(|| format!("no hotkey found with name `{}`", name))?
+                            .hotkey_id
+                    } else {
+                        bail!("either `id` or `name` must be specified");
+                    };
+
+                    let resp = client.send(&HotkeyTriggerRequest { hotkey_id }).await?;
+                    println!("{}", serde_json::to_string_pretty(&resp)?);
+                }
+            }
         }
 
         Command::Artmeshes => {

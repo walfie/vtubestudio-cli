@@ -38,15 +38,10 @@ pub enum Command {
     Init(Config),
     /// VTube Studio statistics.
     Stats,
+    /// Actions related to parameters.
     Params(ParamsCommand),
-    /// List the available hotkeys for a model.
-    Hotkeys {
-        /// Model ID.
-        #[structopt(long)]
-        model_id: Option<String>,
-    },
-    /// Trigger hotkey by ID or name.
-    TriggerHotkey(TriggerHotkey),
+    /// Actions related to hotkeys.
+    Hotkeys(HotkeysCommand),
     /// List art meshes in the current model.
     Artmeshes,
     /// Tint matching art meshes.
@@ -91,6 +86,18 @@ pub struct SetParam {
     pub value: f64,
     #[structopt(long)]
     pub weight: Option<f64>,
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub enum HotkeysCommand {
+    /// List the available hotkeys for a model.
+    List {
+        /// Model ID.
+        #[structopt(long)]
+        model_id: Option<String>,
+    },
+    /// Trigger hotkey by ID or name.
+    Trigger(TriggerHotkey),
 }
 
 #[derive(StructOpt, Debug, Clone)]
