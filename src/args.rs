@@ -52,6 +52,8 @@ pub enum Command {
     Models(ModelsCommand),
     /// Scene color overlay info.
     SceneColors,
+    /// Checking if face is currently found by tracker.
+    FaceFound,
 }
 
 #[derive(StructOpt, Debug, Clone)]

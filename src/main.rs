@@ -73,6 +73,11 @@ async fn main() -> Result<()> {
             println!("{}", serde_json::to_string_pretty(&resp)?);
         }
 
+        Command::FaceFound => {
+            let resp = client.send(&FaceFoundRequest {}).await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+
         Command::Params(command) => {
             handle_params_command(&mut client, command).await?;
         }
