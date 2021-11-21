@@ -12,7 +12,7 @@ pub struct Args {
     /// If this is unspecified and `$XDG_CONFIG_HOME` is unset, the default config path is
     /// `~/.config/vtubestudio-cli/config.json`, otherwise
     /// `$XDG_CONFIG_HOME/vtubestudio-cli/config.json`.
-    #[structopt(env)]
+    #[structopt(env, long)]
     pub config_file: Option<PathBuf>,
     #[structopt(subcommand)]
     pub command: Command,
