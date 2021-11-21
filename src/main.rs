@@ -50,135 +50,22 @@ async fn main() -> Result<()> {
             info!("Requesting plugin permissions. Please accept the permissions pop-up in the VTube Studio app.");
             client.send(&StatisticsRequest {}).await?;
         }
+
         Command::Stats => {
             let resp = client.send(&StatisticsRequest {}).await?;
             println!("{}", serde_json::to_string_pretty(&resp)?);
         }
+
         Command::Params(command) => {
-            use ParamsCommand::*;
-
-            match command {
-                Create(req) => {
-                    let resp = client
-                        .send(&ParameterCreationRequest {
-                            parameter_name: req.id,
-                            explanation: req.explanation,
-                            min: req.min,
-                            max: req.max,
-                            default_value: req.default,
-                        })
-                        .await?;
-
-                    println!("{}", serde_json::to_string_pretty(&resp)?);
-                }
-
-                Get { id } => {
-                    let resp = client.send(&ParameterValueRequest { name: id }).await?;
-
-                    println!("{}", serde_json::to_string_pretty(&resp)?);
-                }
-
-                Delete { id } => {
-                    let resp = client
-                        .send(&ParameterDeletionRequest { parameter_name: id })
-                        .await?;
-
-                    println!("{}", serde_json::to_string_pretty(&resp)?);
-                }
-
-                Set(req) => {
-                    let resp = client
-                        .send(&InjectParameterDataRequest {
-                            parameter_values: vec![ParameterValue {
-                                id: req.id,
-                                value: req.value,
-                                weight: req.weight,
-                            }],
-                        })
-                        .await?;
-
-                    println!("{}", serde_json::to_string_pretty(&resp)?);
-                }
-            }
+            handle_params_command(&mut client, command).await?;
         }
 
         Command::Hotkeys(command) => {
-            use HotkeysCommand::*;
-
-            match command {
-                List { model_id } => {
-                    let resp = client
-                        .send(&HotkeysInCurrentModelRequest { model_id })
-                        .await?;
-                    println!("{}", serde_json::to_string_pretty(&resp)?);
-                }
-
-                Trigger(req) => {
-                    let hotkey_id = if let Some(id) = req.id {
-                        id
-                    } else if let Some(name) = req.name {
-                        let resp = client
-                            .send(&HotkeysInCurrentModelRequest { model_id: None })
-                            .await?;
-
-                        resp.available_hotkeys
-                            .into_iter()
-                            .find(|hotkey| hotkey.name == name)
-                            .with_context(|| format!("no hotkey found with name `{}`", name))?
-                            .hotkey_id
-                    } else {
-                        bail!("either `id` or `name` must be specified");
-                    };
-
-                    let resp = client.send(&HotkeyTriggerRequest { hotkey_id }).await?;
-                    println!("{}", serde_json::to_string_pretty(&resp)?);
-                }
-            }
+            handle_hotkeys_command(&mut client, command).await?;
         }
 
         Command::Artmeshes(command) => {
-            use ArtmeshesCommand::*;
-
-            match command {
-                List => {
-                    let resp = client.send(&ArtMeshListRequest {}).await?;
-                    println!("{}", serde_json::to_string_pretty(&resp)?);
-                }
-
-                Tint(req) => {
-                    let resp = client
-                        .send(&ColorTintRequest {
-                            color_tint: ColorTint {
-                                color_r: req.color.r,
-                                color_g: req.color.g,
-                                color_b: req.color.b,
-                                color_a: req.color.a,
-                                mix_with_scene_lighting_color: req.mix_scene_lighting,
-                                jeb_: req.rainbow,
-                            },
-                            art_mesh_matcher: ArtMeshMatcher {
-                                tint_all: req.all,
-                                art_mesh_number: req.art_mesh_number,
-                                name_exact: req.name_exact,
-                                name_contains: req.name_contains,
-                                tag_exact: req.tag_exact,
-                                tag_contains: req.tag_contains,
-                            },
-                        })
-                        .await?;
-
-                    println!("{}", serde_json::to_string_pretty(&resp)?);
-
-                    if resp.matched_art_meshes > 0 {
-                        info!(
-                            duration = ?req.duration,
-                            "Tint request successful. Adding delay before exiting..."
-                        );
-
-                        tokio::time::sleep(req.duration).await;
-                    }
-                }
-            }
+            handle_artmeshes_command(&mut client, command).await?;
         }
     };
 
@@ -191,6 +78,139 @@ async fn main() -> Result<()> {
             anyhow::bail!(e);
         } else {
             info!(?config_path, "Wrote authentication token to config file");
+        }
+    }
+
+    Ok(())
+}
+
+async fn handle_params_command(client: &mut Client, command: ParamsCommand) -> Result<()> {
+    use ParamsCommand::*;
+
+    match command {
+        Create(req) => {
+            let resp = client
+                .send(&ParameterCreationRequest {
+                    parameter_name: req.id,
+                    explanation: req.explanation,
+                    min: req.min,
+                    max: req.max,
+                    default_value: req.default,
+                })
+                .await?;
+
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+
+        Get { id } => {
+            let resp = client.send(&ParameterValueRequest { name: id }).await?;
+
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+
+        Delete { id } => {
+            let resp = client
+                .send(&ParameterDeletionRequest { parameter_name: id })
+                .await?;
+
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+
+        Set(req) => {
+            let resp = client
+                .send(&InjectParameterDataRequest {
+                    parameter_values: vec![ParameterValue {
+                        id: req.id,
+                        value: req.value,
+                        weight: req.weight,
+                    }],
+                })
+                .await?;
+
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+    }
+
+    Ok(())
+}
+
+async fn handle_hotkeys_command(client: &mut Client, command: HotkeysCommand) -> Result<()> {
+    use HotkeysCommand::*;
+
+    match command {
+        List { model_id } => {
+            let resp = client
+                .send(&HotkeysInCurrentModelRequest { model_id })
+                .await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+
+        Trigger(req) => {
+            let hotkey_id = if let Some(id) = req.id {
+                id
+            } else if let Some(name) = req.name {
+                let resp = client
+                    .send(&HotkeysInCurrentModelRequest { model_id: None })
+                    .await?;
+
+                resp.available_hotkeys
+                    .into_iter()
+                    .find(|hotkey| hotkey.name == name)
+                    .with_context(|| format!("no hotkey found with name `{}`", name))?
+                    .hotkey_id
+            } else {
+                bail!("either `id` or `name` must be specified");
+            };
+
+            let resp = client.send(&HotkeyTriggerRequest { hotkey_id }).await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+    }
+
+    Ok(())
+}
+
+async fn handle_artmeshes_command(client: &mut Client, command: ArtmeshesCommand) -> Result<()> {
+    use ArtmeshesCommand::*;
+
+    match command {
+        List => {
+            let resp = client.send(&ArtMeshListRequest {}).await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+
+        Tint(req) => {
+            let resp = client
+                .send(&ColorTintRequest {
+                    color_tint: ColorTint {
+                        color_r: req.color.r,
+                        color_g: req.color.g,
+                        color_b: req.color.b,
+                        color_a: req.color.a,
+                        mix_with_scene_lighting_color: req.mix_scene_lighting,
+                        jeb_: req.rainbow,
+                    },
+                    art_mesh_matcher: ArtMeshMatcher {
+                        tint_all: req.all,
+                        art_mesh_number: req.art_mesh_number,
+                        name_exact: req.name_exact,
+                        name_contains: req.name_contains,
+                        tag_exact: req.tag_exact,
+                        tag_contains: req.tag_contains,
+                    },
+                })
+                .await?;
+
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+
+            if resp.matched_art_meshes > 0 {
+                info!(
+                    duration = ?req.duration,
+                    "Tint request successful. Adding delay before exiting..."
+                );
+
+                tokio::time::sleep(req.duration).await;
+            }
         }
     }
 
