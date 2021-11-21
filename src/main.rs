@@ -1,5 +1,8 @@
+mod args;
+
+use crate::args::{Args, Command, Config};
+
 use anyhow::{Context, Result};
-use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use structopt::StructOpt;
 use tracing::{error, info};
@@ -48,8 +51,21 @@ async fn main() -> Result<()> {
             client.send(&StatisticsRequest {}).await?;
         }
         Command::Stats => {
-            let stats = client.send(&StatisticsRequest {}).await?;
-            println!("{}", serde_json::to_string_pretty(&stats)?);
+            let resp = client.send(&StatisticsRequest {}).await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+        Command::CreateParam(req) => {
+            let resp = client
+                .send(&ParameterCreationRequest {
+                    parameter_name: req.param_id.clone(),
+                    explanation: req.explanation.clone(),
+                    min: req.min,
+                    max: req.max,
+                    default_value: req.default,
+                })
+                .await?;
+
+            println!("{}", serde_json::to_string_pretty(&resp)?);
         }
     };
 
@@ -66,39 +82,4 @@ async fn main() -> Result<()> {
     }
 
     Ok(())
-}
-
-#[derive(StructOpt)]
-struct Args {
-    /// Overwrite path to config file.
-    ///
-    /// If this is unspecified and `$XDG_CONFIG_HOME` is unset, the default config path is
-    /// `~/.config/vtubestudio-cli/config.json`, otherwise
-    /// `$XDG_CONFIG_HOME/vtubestudio-cli/config.json`.
-    #[structopt(env)]
-    config_file: Option<PathBuf>,
-    #[structopt(subcommand)]
-    command: Command,
-}
-
-#[derive(StructOpt)]
-enum Command {
-    /// Request permissions from VTube Studio to initialize config file.
-    Init(Config),
-    /// VTube Studio statistics.
-    Stats,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, StructOpt)]
-struct Config {
-    #[structopt(short, long, default_value = "localhost")]
-    host: String,
-    #[structopt(short, long, default_value = "8001")]
-    port: u16,
-    #[structopt(long, env, hide_env_values = true)]
-    token: Option<String>,
-    #[structopt(long, default_value = "VTube Studio CLI")]
-    plugin_name: String,
-    #[structopt(long, default_value = "Walfie")]
-    plugin_developer: String,
 }
