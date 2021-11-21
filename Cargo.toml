@@ -9,11 +9,13 @@ path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0.47"
+parse_duration = "2.1.1"
+read_color = "1.0.0"
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.71"
 structopt = "0.3.25"
-tokio = { version = "1.14.0", features = ["macros"] }
+tokio = { version = "1.14.0", features = ["macros", "time"] }
 tracing = "0.1.29"
 tracing-subscriber = "0.3.1"
-vtubestudio = "0.2.1"
+vtubestudio = "0.3.1"
 xdg = "2.4.0"

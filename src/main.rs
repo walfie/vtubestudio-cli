@@ -106,6 +106,43 @@ async fn main() -> Result<()> {
             let resp = client.send(&HotkeyTriggerRequest { hotkey_id }).await?;
             println!("{}", serde_json::to_string_pretty(&resp)?);
         }
+        Command::Artmeshes => {
+            let resp = client.send(&ArtMeshListRequest {}).await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+        Command::Tint(req) => {
+            let resp = client
+                .send(&ColorTintRequest {
+                    color_tint: ColorTint {
+                        color_r: req.color.r,
+                        color_g: req.color.g,
+                        color_b: req.color.b,
+                        color_a: req.color.a,
+                        mix_with_scene_lighting_color: req.mix_scene_lighting,
+                        jeb_: req.rainbow,
+                    },
+                    art_mesh_matcher: ArtMeshMatcher {
+                        tint_all: req.all,
+                        art_mesh_number: req.art_mesh_number,
+                        name_exact: req.name_exact,
+                        name_contains: req.name_contains,
+                        tag_exact: req.tag_exact,
+                        tag_contains: req.tag_contains,
+                    },
+                })
+                .await?;
+
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+
+            if resp.matched_art_meshes > 0 {
+                info!(
+                    duration = ?req.duration,
+                    "Tint request successful. Adding delay before exiting..."
+                );
+
+                tokio::time::sleep(req.duration).await;
+            }
+        }
     };
 
     drop(client);
