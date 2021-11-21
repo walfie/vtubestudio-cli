@@ -42,10 +42,8 @@ pub enum Command {
     Params(ParamsCommand),
     /// Actions related to hotkeys.
     Hotkeys(HotkeysCommand),
-    /// List art meshes in the current model.
-    Artmeshes,
-    /// Tint matching art meshes.
-    Tint(Tint),
+    /// Actions related to artmeshes.
+    Artmeshes(ArtmeshesCommand),
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -108,6 +106,14 @@ pub struct TriggerHotkey {
     /// Find and trigger the first hotkey with this name, if it exists.
     #[structopt(long, conflicts_with = "id")]
     pub name: Option<String>,
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub enum ArtmeshesCommand {
+    /// List art meshes in the current model.
+    List,
+    /// Tint matching art meshes.
+    Tint(Tint),
 }
 
 #[derive(StructOpt, Debug, Clone)]

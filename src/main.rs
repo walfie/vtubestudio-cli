@@ -1,6 +1,6 @@
 mod args;
 
-use crate::args::{Args, Command, Config, HotkeysCommand, ParamsCommand};
+use crate::args::{Args, ArtmeshesCommand, Command, Config, HotkeysCommand, ParamsCommand};
 
 use anyhow::{bail, Context, Result};
 use std::path::PathBuf;
@@ -136,42 +136,48 @@ async fn main() -> Result<()> {
             }
         }
 
-        Command::Artmeshes => {
-            let resp = client.send(&ArtMeshListRequest {}).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
-        }
+        Command::Artmeshes(command) => {
+            use ArtmeshesCommand::*;
 
-        Command::Tint(req) => {
-            let resp = client
-                .send(&ColorTintRequest {
-                    color_tint: ColorTint {
-                        color_r: req.color.r,
-                        color_g: req.color.g,
-                        color_b: req.color.b,
-                        color_a: req.color.a,
-                        mix_with_scene_lighting_color: req.mix_scene_lighting,
-                        jeb_: req.rainbow,
-                    },
-                    art_mesh_matcher: ArtMeshMatcher {
-                        tint_all: req.all,
-                        art_mesh_number: req.art_mesh_number,
-                        name_exact: req.name_exact,
-                        name_contains: req.name_contains,
-                        tag_exact: req.tag_exact,
-                        tag_contains: req.tag_contains,
-                    },
-                })
-                .await?;
+            match command {
+                List => {
+                    let resp = client.send(&ArtMeshListRequest {}).await?;
+                    println!("{}", serde_json::to_string_pretty(&resp)?);
+                }
 
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+                Tint(req) => {
+                    let resp = client
+                        .send(&ColorTintRequest {
+                            color_tint: ColorTint {
+                                color_r: req.color.r,
+                                color_g: req.color.g,
+                                color_b: req.color.b,
+                                color_a: req.color.a,
+                                mix_with_scene_lighting_color: req.mix_scene_lighting,
+                                jeb_: req.rainbow,
+                            },
+                            art_mesh_matcher: ArtMeshMatcher {
+                                tint_all: req.all,
+                                art_mesh_number: req.art_mesh_number,
+                                name_exact: req.name_exact,
+                                name_contains: req.name_contains,
+                                tag_exact: req.tag_exact,
+                                tag_contains: req.tag_contains,
+                            },
+                        })
+                        .await?;
 
-            if resp.matched_art_meshes > 0 {
-                info!(
-                    duration = ?req.duration,
-                    "Tint request successful. Adding delay before exiting..."
-                );
+                    println!("{}", serde_json::to_string_pretty(&resp)?);
 
-                tokio::time::sleep(req.duration).await;
+                    if resp.matched_art_meshes > 0 {
+                        info!(
+                            duration = ?req.duration,
+                            "Tint request successful. Adding delay before exiting..."
+                        );
+
+                        tokio::time::sleep(req.duration).await;
+                    }
+                }
             }
         }
     };
