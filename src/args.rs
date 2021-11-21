@@ -50,6 +50,8 @@ pub enum Command {
     Artmeshes(ArtmeshesCommand),
     /// Actions related to models.
     Models(ModelsCommand),
+    /// Scene color overlay info.
+    SceneColors,
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -199,7 +201,7 @@ pub enum ModelsCommand {
         #[structopt(long, conflicts_with = "id")]
         name: Option<String>,
     },
-    // Move the current model.
+    /// Move the current model.
     Move(MoveModel),
 }
 

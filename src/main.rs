@@ -68,6 +68,11 @@ async fn main() -> Result<()> {
             println!("{}", serde_json::to_string_pretty(&resp)?);
         }
 
+        Command::SceneColors => {
+            let resp = client.send(&SceneColorOverlayInfoRequest {}).await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+
         Command::Params(command) => {
             handle_params_command(&mut client, command).await?;
         }
