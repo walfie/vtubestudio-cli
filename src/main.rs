@@ -57,11 +57,24 @@ async fn main() -> Result<()> {
         Command::CreateParam(req) => {
             let resp = client
                 .send(&ParameterCreationRequest {
-                    parameter_name: req.param_id.clone(),
-                    explanation: req.explanation.clone(),
+                    parameter_name: req.id,
+                    explanation: req.explanation,
                     min: req.min,
                     max: req.max,
                     default_value: req.default,
+                })
+                .await?;
+
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+        Command::SetParam(req) => {
+            let resp = client
+                .send(&InjectParameterDataRequest {
+                    parameter_values: vec![ParameterValue {
+                        id: req.id,
+                        value: req.value,
+                        weight: req.weight,
+                    }],
                 })
                 .await?;
 

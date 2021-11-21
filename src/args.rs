@@ -37,12 +37,13 @@ pub enum Command {
     Stats,
     /// Create a custom parameter.
     CreateParam(CreateParam),
+    /// Temporarily set the value for a custom parameter.
+    SetParam(SetParam),
 }
 
 #[derive(StructOpt)]
 pub struct CreateParam {
-    #[structopt(long)]
-    pub param_id: String,
+    pub id: String,
     #[structopt(long, default_value = "0")]
     pub default: f64,
     #[structopt(long, default_value = "0")]
@@ -51,4 +52,12 @@ pub struct CreateParam {
     pub max: f64,
     #[structopt(long)]
     pub explanation: Option<String>,
+}
+
+#[derive(StructOpt)]
+pub struct SetParam {
+    pub id: String,
+    pub value: f64,
+    #[structopt(long)]
+    pub weight: Option<f64>,
 }
