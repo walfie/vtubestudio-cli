@@ -2,7 +2,7 @@ mod args;
 
 use crate::args::{Args, Command, Config};
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use std::path::PathBuf;
 use structopt::StructOpt;
 use tracing::{error, info};
@@ -78,6 +78,32 @@ async fn main() -> Result<()> {
                 })
                 .await?;
 
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+        Command::Hotkeys { model_id } => {
+            let resp = client
+                .send(&HotkeysInCurrentModelRequest { model_id })
+                .await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+        Command::TriggerHotkey(req) => {
+            let hotkey_id = if let Some(id) = req.id {
+                id
+            } else if let Some(name) = req.name {
+                let resp = client
+                    .send(&HotkeysInCurrentModelRequest { model_id: None })
+                    .await?;
+
+                resp.available_hotkeys
+                    .into_iter()
+                    .find(|hotkey| hotkey.name == name)
+                    .with_context(|| format!("no hotkey found with name `{}`", name))?
+                    .hotkey_id
+            } else {
+                bail!("either `id` or `name` must be specified");
+            };
+
+            let resp = client.send(&HotkeyTriggerRequest { hotkey_id }).await?;
             println!("{}", serde_json::to_string_pretty(&resp)?);
         }
     };

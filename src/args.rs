@@ -39,6 +39,14 @@ pub enum Command {
     CreateParam(CreateParam),
     /// Temporarily set the value for a custom parameter.
     SetParam(SetParam),
+    /// List the available hotkeys for a model.
+    Hotkeys {
+        /// Model ID.
+        #[structopt(long)]
+        model_id: Option<String>,
+    },
+    /// Trigger hotkey by ID or name.
+    TriggerHotkey(TriggerHotkey),
 }
 
 #[derive(StructOpt)]
@@ -60,4 +68,12 @@ pub struct SetParam {
     pub value: f64,
     #[structopt(long)]
     pub weight: Option<f64>,
+}
+
+#[derive(StructOpt)]
+pub struct TriggerHotkey {
+    #[structopt(group = "id_or_name")]
+    pub id: Option<String>,
+    #[structopt(long, group = "id_or_name")]
+    pub name: Option<String>,
 }
