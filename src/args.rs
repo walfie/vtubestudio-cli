@@ -38,8 +38,18 @@ pub enum Command {
     Init(Config),
     /// VTube Studio statistics.
     Stats,
+    /// Get the value of a parameter.
+    Param {
+        /// Name of the parameter.
+        id: String,
+    },
     /// Create a custom parameter.
     CreateParam(CreateParam),
+    /// Delete a custom parameter.
+    DeleteParam {
+        /// Name of the parameter.
+        id: String,
+    },
     /// Temporarily set the value for a custom parameter.
     SetParam(SetParam),
     /// List the available hotkeys for a model.

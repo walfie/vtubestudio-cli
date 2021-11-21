@@ -67,6 +67,18 @@ async fn main() -> Result<()> {
 
             println!("{}", serde_json::to_string_pretty(&resp)?);
         }
+        Command::Param { id } => {
+            let resp = client.send(&ParameterValueRequest { name: id }).await?;
+
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+        Command::DeleteParam { id } => {
+            let resp = client
+                .send(&ParameterDeletionRequest { parameter_name: id })
+                .await?;
+
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
         Command::SetParam(req) => {
             let resp = client
                 .send(&InjectParameterDataRequest {
