@@ -36,6 +36,8 @@ pub struct Config {
 pub enum Command {
     /// Request permissions from VTube Studio to initialize config file.
     Init(Config),
+    /// Get the current state of the API.
+    State,
     /// VTube Studio statistics.
     Stats,
     /// Actions related to parameters.
@@ -53,23 +55,29 @@ pub enum ParamsCommand {
     /// Get the value of a parameter.
     Get {
         /// Name of the parameter.
-        id: String,
+        name: String,
     },
     /// Create a custom parameter.
     Create(CreateParam),
     /// Temporarily set the value for a custom parameter.
     ///
     /// VTube Studio will reset this value if it hasn't been updated at least once per second.
-    Set(SetParam),
+    Inject(InjectParam),
+    /// Delete a custom parameter.
     Delete {
         /// Name of the parameter.
-        id: String,
+        name: String,
     },
+    /// Get the value for all input parameters in the current model.
+    ListInputs,
+    /// Get the value for all Live2D parameters in the current model.
+    #[structopt(name = "list-live2d")]
+    ListLive2D,
 }
 
 #[derive(StructOpt, Debug, Clone)]
 pub struct CreateParam {
-    pub id: String,
+    pub name: String,
     #[structopt(long, default_value = "0")]
     pub default: f64,
     #[structopt(long, default_value = "0")]
@@ -81,7 +89,7 @@ pub struct CreateParam {
 }
 
 #[derive(StructOpt, Debug, Clone)]
-pub struct SetParam {
+pub struct InjectParam {
     pub id: String,
     pub value: f64,
     #[structopt(long)]

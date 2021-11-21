@@ -53,6 +53,11 @@ async fn main() -> Result<()> {
             client.send(&StatisticsRequest {}).await?;
         }
 
+        Command::State => {
+            let resp = client.send(&ApiStateRequest {}).await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+
         Command::Stats => {
             let resp = client.send(&StatisticsRequest {}).await?;
             println!("{}", serde_json::to_string_pretty(&resp)?);
@@ -97,7 +102,7 @@ async fn handle_params_command(client: &mut Client, command: ParamsCommand) -> R
         Create(req) => {
             let resp = client
                 .send(&ParameterCreationRequest {
-                    parameter_name: req.id,
+                    parameter_name: req.name,
                     explanation: req.explanation,
                     min: req.min,
                     max: req.max,
@@ -108,21 +113,32 @@ async fn handle_params_command(client: &mut Client, command: ParamsCommand) -> R
             println!("{}", serde_json::to_string_pretty(&resp)?);
         }
 
-        Get { id } => {
-            let resp = client.send(&ParameterValueRequest { name: id }).await?;
-
+        Get { name } => {
+            let resp = client.send(&ParameterValueRequest { name }).await?;
             println!("{}", serde_json::to_string_pretty(&resp)?);
         }
 
-        Delete { id } => {
+        ListLive2D => {
+            let resp = client.send(&Live2DParameterListRequest {}).await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+
+        ListInputs => {
+            let resp = client.send(&InputParameterListRequest {}).await?;
+            println!("{}", serde_json::to_string_pretty(&resp)?);
+        }
+
+        Delete { name } => {
             let resp = client
-                .send(&ParameterDeletionRequest { parameter_name: id })
+                .send(&ParameterDeletionRequest {
+                    parameter_name: name,
+                })
                 .await?;
 
             println!("{}", serde_json::to_string_pretty(&resp)?);
         }
 
-        Set(req) => {
+        Inject(req) => {
             let resp = client
                 .send(&InjectParameterDataRequest {
                     parameter_values: vec![ParameterValue {
