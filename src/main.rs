@@ -290,7 +290,7 @@ async fn handle_models_command(client: &mut Client, command: ModelsCommand) -> R
         Move(req) => {
             let resp = client
                 .send(&MoveModelRequest {
-                    time_in_seconds: req.duration.as_secs() as f64,
+                    time_in_seconds: req.duration.as_millis() as f64 / 1000.0,
                     values_are_relative_to_model: req.relative,
                     position_x: req.x,
                     position_y: req.y,

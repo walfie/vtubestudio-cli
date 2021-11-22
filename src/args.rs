@@ -209,16 +209,22 @@ pub enum ModelsCommand {
 
 #[derive(StructOpt, Debug, Clone)]
 pub struct MoveModel {
+    /// How long the movement animation should take.
     #[structopt(long, parse(try_from_str = parse_duration::parse))]
     pub duration: Duration,
+    /// Whether the movement is relative to the current model position.
     #[structopt(long)]
     pub relative: bool,
+    /// Horizontal position. -1 for left edge, 1 for right edge.
     #[structopt(long)]
     pub x: Option<f64>,
+    /// Vertical position. -1 for bottom edge, 1 for top edge.
     #[structopt(long)]
     pub y: Option<f64>,
+    /// Rotation in degrees, between -360 and 360.
     #[structopt(long)]
     pub rotation: Option<f64>,
+    /// Size, between -100 and 100.
     #[structopt(long)]
     pub size: Option<f64>,
 }
