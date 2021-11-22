@@ -14,6 +14,11 @@ For more complex tasks, you might want to look at client libraries like
 [VTube Studio API]: https://github.com/DenchiSoft/VTubeStudio
 [`vtubestudio-rs`]: https://github.com/walfie/vtubestudio-rs
 
+## Download
+
+Check the [releases page](https://github.com/walfie/vtubestudio-cli/releases)
+to download prebuilt binaries for your platform.
+
 ## Initialization
 
 `vts` reads auth token info from a JSON config file whose default location depends on platform.
@@ -29,7 +34,7 @@ pop-up in the app asking for confirmation) and save the token for use in future
 calls. The plugin name and developer name can be customized with
 `--plugin-name` and `--developer-name`, respectively.
 
-## Config location
+### Config file location
 
 By default, the config file can be found at:
 
