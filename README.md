@@ -1,8 +1,8 @@
 # vtubestudio-cli (`vts`)
 
-CLI tool for interacting with the [VTube Studio API] in a one-shot manner. It
-connects to the websocket, authenticates, performs one or two requests, and
-then exits.
+CLI tool for sending one-off requests to the [VTube Studio API]. It connects to
+the websocket, authenticates, performs one or two other requests, and then
+disconnects and exits.
 
 The primary use case is to do infrequent actions such as triggering hotkeys or
 registering custom parameters, without needing to establish a long-running
