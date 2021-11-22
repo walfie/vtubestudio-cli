@@ -193,10 +193,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "dirs"
-version = "3.0.2"
+name = "directories"
+version = "4.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30baa043103c9d0c2a57cf537cc2f35623889dc0d405e6c3cccfadbc81c71309"
+checksum = "f51c5d4ddabd36886dd3e1438cb358cdcb0d7c499cb99cb4ac2e38e18b5cb210"
 dependencies = [
  "dirs-sys",
 ]
@@ -1171,9 +1171,10 @@ dependencies = [
 
 [[package]]
 name = "vtubestudio-cli"
-version = "0.1.1-alpha.0"
+version = "0.2.0-alpha.0"
 dependencies = [
  "anyhow",
+ "directories",
  "once_cell",
  "parse_duration",
  "read_color",
@@ -1184,7 +1185,6 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "vtubestudio",
- "xdg",
 ]
 
 [[package]]
@@ -1214,12 +1214,3 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
-
-[[package]]
-name = "xdg"
-version = "2.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a23fe958c70412687039c86f578938b4a0bb50ec788e96bce4d6ab00ddd5803"
-dependencies = [
- "dirs",
-]

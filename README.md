@@ -12,17 +12,32 @@ websocket connection.
 
 ## Initialization
 
-`vts` reads auth token info from a JSON config file (by default, located at
-`~/.config/vtubestudio-cli/config.json`). To generate the config, you can run:
+`vts` reads auth token info from a JSON config file whose default location depends on platform.
+
+To generate the config in the default location, you can run:
 
 ```sh
-vts init
+vts config init
 ```
 
 This will register the plugin with the VTube Studio API (the user will get a
 pop-up in the app asking for confirmation) and save the token for use in future
 calls. The plugin name and developer name can be customized with
 `--plugin-name` and `--developer-name`, respectively.
+
+## Config location
+
+By default, the config file can be found at:
+
+* Windows: `%USERPROFILE%\AppData\Roaming\walfie\vtubestudio-cli\config.json`
+* macOS: `$HOME/Library/Application Support/com.github.walfie.vtubestudio-cli/config.json`
+* Linux: `$XDG_CONFIG_DIR/vtubestudio-cli/config.json` or `$HOME/.config/vtubestudio-cli/config.json`
+
+This path can be overridden by setting the `CONFIG_FILE` environment variable
+or passing the `--config-file` flag.
+
+You can also run `vts config path` to show the path to the config, or `vts
+config show` to show the contents of the config file.
 
 ## Usage
 

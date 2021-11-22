@@ -1,7 +1,8 @@
 mod args;
 
 use crate::args::{
-    Args, ArtmeshesCommand, Command, Config, HotkeysCommand, ModelsCommand, ParamsCommand,
+    Args, ArtmeshesCommand, Command, Config, ConfigCommand, HotkeysCommand, ModelsCommand,
+    ParamsCommand,
 };
 
 use anyhow::{bail, Context, Result};
@@ -24,12 +25,19 @@ async fn main() -> Result<()> {
 
     let config_path = match args.config_file {
         Some(path) => path,
-        None => xdg::BaseDirectories::with_prefix("vtubestudio-cli")?
-            .place_config_file("config.json")
-            .context("Failed to find config path")?,
+        None => {
+            let mut path =
+                directories::ProjectDirs::from("com.github", "walfie", "vtubestudio-cli")
+                    .context("failed to get base directory")?
+                    .config_dir()
+                    .to_path_buf();
+
+            path.push("config.json");
+            path
+        }
     };
 
-    let mut conf: Config = if let Command::Init(conf) = &args.command {
+    let mut conf: Config = if let Command::Config(ConfigCommand::Init(conf)) = &args.command {
         conf.clone()
     } else {
         let json_str = std::fs::read_to_string(&config_path).with_context(|| {
@@ -53,9 +61,21 @@ async fn main() -> Result<()> {
         .build_tungstenite();
 
     match args.command {
-        Command::Init(..) => {
-            info!("Requesting plugin permissions. Please accept the permissions pop-up in the VTube Studio app.");
-            client.send(&StatisticsRequest {}).await?;
+        Command::Config(command) => {
+            use ConfigCommand::*;
+
+            match command {
+                Init(..) => {
+                    info!("Requesting plugin permissions. Please accept the permissions pop-up in the VTube Studio app.");
+                    client.send(&StatisticsRequest {}).await?;
+                }
+                Show => {
+                    print(&conf)?;
+                }
+                Path => {
+                    println!("{:?}", config_path);
+                }
+            }
         }
 
         Command::State => {
@@ -99,6 +119,12 @@ async fn main() -> Result<()> {
 
     if let Some(new_token) = new_tokens.next().await {
         conf.token = Some(new_token);
+
+        let mut base_path = config_path.clone();
+        base_path.pop();
+        std::fs::create_dir_all(&base_path)
+            .with_context(|| format!("Failed to create directory {:?}", base_path))?;
+
         if let Err(e) = std::fs::write(&config_path, serde_json::to_string_pretty(&conf)?) {
             error!(?config_path, "Failed to write config file");
             anyhow::bail!(e);
