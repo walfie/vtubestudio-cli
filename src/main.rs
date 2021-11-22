@@ -24,9 +24,16 @@ async fn main() -> Result<()> {
 
     let config_path = match args.config_file {
         Some(path) => path,
-        None => xdg::BaseDirectories::with_prefix("vtubestudio-cli")?
-            .place_config_file("config.json")
-            .context("Failed to find config path")?,
+        None => {
+            let mut path =
+                directories::ProjectDirs::from("com.github", "walfie", "vtubestudio-cli")
+                    .context("failed to get base directory")?
+                    .config_dir()
+                    .to_path_buf();
+
+            path.push("config.json");
+            path
+        }
     };
 
     let mut conf: Config = if let Command::Init(conf) = &args.command {
@@ -99,6 +106,12 @@ async fn main() -> Result<()> {
 
     if let Some(new_token) = new_tokens.next().await {
         conf.token = Some(new_token);
+
+        let mut base_path = config_path.clone();
+        base_path.pop();
+        std::fs::create_dir_all(&base_path)
+            .with_context(|| format!("Failed to create directory {:?}", base_path))?;
+
         if let Err(e) = std::fs::write(&config_path, serde_json::to_string_pretty(&conf)?) {
             error!(?config_path, "Failed to write config file");
             anyhow::bail!(e);

@@ -8,10 +8,6 @@ use structopt::StructOpt;
 #[derive(StructOpt, Debug, Clone)]
 pub struct Args {
     /// Overwrite path to config file.
-    ///
-    /// If this is unspecified and `$XDG_CONFIG_HOME` is unset, the default config path is
-    /// `~/.config/vtubestudio-cli/config.json`, otherwise
-    /// `$XDG_CONFIG_HOME/vtubestudio-cli/config.json`.
     #[structopt(env, long)]
     pub config_file: Option<PathBuf>,
     /// Avoid pretty-printing JSON.
