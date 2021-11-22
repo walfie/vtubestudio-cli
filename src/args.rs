@@ -8,7 +8,7 @@ use structopt::StructOpt;
 #[derive(StructOpt, Debug, Clone)]
 pub struct Args {
     /// Overwrite path to config file.
-    #[structopt(env, long)]
+    #[structopt(env = "VTS_CONFIG", long)]
     pub config_file: Option<PathBuf>,
     /// Avoid pretty-printing JSON.
     #[structopt(long)]
@@ -23,7 +23,7 @@ pub struct Config {
     pub host: String,
     #[structopt(short, long, default_value = "8001")]
     pub port: u16,
-    #[structopt(long, env, hide_env_values = true)]
+    #[structopt(long, env = "VTS_TOKEN", hide_env_values = true)]
     pub token: Option<String>,
     #[structopt(long, default_value = "VTube Studio CLI")]
     pub plugin_name: String,
