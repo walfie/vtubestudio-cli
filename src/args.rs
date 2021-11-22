@@ -42,12 +42,16 @@ pub enum Command {
     /// Get a list of VTube Studio folders.
     Folders,
     /// Actions related to parameters.
+    #[structopt(alias = "param")]
     Params(ParamsCommand),
     /// Actions related to hotkeys.
+    #[structopt(alias = "hotkey")]
     Hotkeys(HotkeysCommand),
     /// Actions related to artmeshes.
+    #[structopt(alias = "artmesh")]
     Artmeshes(ArtmeshesCommand),
     /// Actions related to models.
+    #[structopt(alias = "model")]
     Models(ModelsCommand),
     /// Scene color overlay info.
     SceneColors,
