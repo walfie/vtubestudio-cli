@@ -219,7 +219,7 @@ pub enum ModelsCommand {
 #[derive(StructOpt, Debug, Clone)]
 pub struct MoveModel {
     /// How long the movement animation should take.
-    #[structopt(long, parse(try_from_str = parse_duration::parse))]
+    #[structopt(long, default_value = "0s", parse(try_from_str = parse_duration::parse))]
     pub duration: Duration,
     /// Whether the movement is relative to the current model position.
     #[structopt(long)]
