@@ -14,7 +14,7 @@ websocket connection.
 
 `vts` reads auth token info from a JSON config file whose default location depends on platform.
 
-* Windows: `C:\Users\YourUsername\AppData\Roaming\walfie\vtubestudio-cli`
+* Windows: `%USERPROFILE%\AppData\Roaming\walfie\vtubestudio-cli\config.json`
 * macOS: `$HOME/Library/Application Support/com.github.walfie.vtubestudio-cli/config.json`
 * Linux: `$XDG_CONFIG_DIR/vtubestudio-cli/config.json` or `$HOME/.config/vtubestudio-cli/config.json`
 
