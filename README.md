@@ -1,7 +1,7 @@
 # vtubestudio-cli (`vts`)
 
-CLI tool for sending one-off requests to the [VTube Studio API]. It connects to
-the websocket, authenticates, performs one or two other requests, and then
+CLI program for sending one-off requests to the [VTube Studio API]. It connects
+to the websocket, authenticates, performs one or two other requests, and then
 disconnects and exits.
 
 The primary use case is to do infrequent actions such as triggering hotkeys or
@@ -18,6 +18,9 @@ For more complex tasks, you might want to look at client libraries like
 
 Check the [releases page](https://github.com/walfie/vtubestudio-cli/releases)
 to download prebuilt binaries for your platform.
+
+Otherwise you can use `cargo install vtubestudio-cli` or build it manually from
+this repo using `cargo build --release`.
 
 ## Initialization
 
@@ -85,8 +88,8 @@ config show` to show the contents of the config file.
     ```
 
     VTube Studio resets artmesh tints when the plugin disconnects. Since this
-    CLI tool normally disconnects immediately after executing commands (which
-    would otherwise reset the tint), the `---duration` flag adds a delay
+    CLI program normally disconnects immediately after executing commands
+    (which would otherwise reset the tint), the `---duration` flag adds a delay
     afterwards, to keep the tint active.
 
 * Tint artmesh (hex color)
