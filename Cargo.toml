@@ -3,7 +3,12 @@ name = "vtubestudio-cli"
 version = "0.3.1-alpha.0"
 edition = "2021"
 license = "MIT"
-publish = false
+description = "CLI program for interacting with the VTube Studio API"
+readme = "README.md"
+keywords = ["vtubestudio", "cli"]
+categories = ["command-line-utilities"]
+homepage = "https://github.com/walfie/vtubestudio-cli"
+repository = "https://github.com/walfie/vtubestudio-cli"
 
 [[bin]]
 name = "vts"
