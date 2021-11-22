@@ -33,8 +33,8 @@ pub struct Config {
 
 #[derive(StructOpt, Debug, Clone)]
 pub enum Command {
-    /// Request permissions from VTube Studio to initialize config file.
-    Init(Config),
+    /// Actions related to configuration of this program.
+    Config(ConfigCommand),
     /// Get the current state of the API.
     State,
     /// VTube Studio statistics.
@@ -53,6 +53,16 @@ pub enum Command {
     SceneColors,
     /// Checking if face is currently found by tracker.
     FaceFound,
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub enum ConfigCommand {
+    /// Requests permissions from VTube Studio to initialize config file.
+    Init(Config),
+    /// Shows the contents of config file.
+    Show,
+    /// Outputs the config file path.
+    Path,
 }
 
 #[derive(StructOpt, Debug, Clone)]

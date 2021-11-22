@@ -24,13 +24,16 @@ or passing the `--config-file` flag.
 To generate the config in the default location, you can run:
 
 ```sh
-vts init
+vts config init
 ```
 
 This will register the plugin with the VTube Studio API (the user will get a
 pop-up in the app asking for confirmation) and save the token for use in future
 calls. The plugin name and developer name can be customized with
 `--plugin-name` and `--developer-name`, respectively.
+
+You can also run `vts config path` to show the path to the config, or `vts
+config show` to show the contents of the config file.
 
 ## Usage
 

@@ -1,7 +1,8 @@
 mod args;
 
 use crate::args::{
-    Args, ArtmeshesCommand, Command, Config, HotkeysCommand, ModelsCommand, ParamsCommand,
+    Args, ArtmeshesCommand, Command, Config, ConfigCommand, HotkeysCommand, ModelsCommand,
+    ParamsCommand,
 };
 
 use anyhow::{bail, Context, Result};
@@ -36,7 +37,7 @@ async fn main() -> Result<()> {
         }
     };
 
-    let mut conf: Config = if let Command::Init(conf) = &args.command {
+    let mut conf: Config = if let Command::Config(ConfigCommand::Init(conf)) = &args.command {
         conf.clone()
     } else {
         let json_str = std::fs::read_to_string(&config_path).with_context(|| {
@@ -60,9 +61,21 @@ async fn main() -> Result<()> {
         .build_tungstenite();
 
     match args.command {
-        Command::Init(..) => {
-            info!("Requesting plugin permissions. Please accept the permissions pop-up in the VTube Studio app.");
-            client.send(&StatisticsRequest {}).await?;
+        Command::Config(command) => {
+            use ConfigCommand::*;
+
+            match command {
+                Init(..) => {
+                    info!("Requesting plugin permissions. Please accept the permissions pop-up in the VTube Studio app.");
+                    client.send(&StatisticsRequest {}).await?;
+                }
+                Show => {
+                    print(&conf)?;
+                }
+                Path => {
+                    println!("{:?}", config_path);
+                }
+            }
         }
 
         Command::State => {
