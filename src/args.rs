@@ -14,6 +14,9 @@ pub struct Args {
     /// `$XDG_CONFIG_HOME/vtubestudio-cli/config.json`.
     #[structopt(env, long)]
     pub config_file: Option<PathBuf>,
+    /// Avoid pretty-printing JSON.
+    #[structopt(long)]
+    pub compact: bool,
     #[structopt(subcommand)]
     pub command: Command,
 }

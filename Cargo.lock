@@ -1174,6 +1174,7 @@ name = "vtubestudio-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "once_cell",
  "parse_duration",
  "read_color",
  "serde",

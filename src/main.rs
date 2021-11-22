@@ -5,15 +5,20 @@ use crate::args::{
 };
 
 use anyhow::{bail, Context, Result};
+use once_cell::sync::OnceCell;
+use serde::Serialize;
 use std::path::PathBuf;
 use structopt::StructOpt;
 use tracing::{error, info};
 use vtubestudio::data::*;
 use vtubestudio::Client;
 
+static JSON_COMPACT: OnceCell<bool> = OnceCell::new();
+
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     let args = Args::from_args();
+    let _ = JSON_COMPACT.set(args.compact);
 
     tracing_subscriber::fmt::fmt().init();
 
@@ -54,28 +59,23 @@ async fn main() -> Result<()> {
         }
 
         Command::State => {
-            let resp = client.send(&ApiStateRequest {}).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&client.send(&ApiStateRequest {}).await?)?;
         }
 
         Command::Folders => {
-            let resp = client.send(&VtsFolderInfoRequest {}).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&client.send(&VtsFolderInfoRequest {}).await?)?;
         }
 
         Command::Stats => {
-            let resp = client.send(&StatisticsRequest {}).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&client.send(&StatisticsRequest {}).await?)?;
         }
 
         Command::SceneColors => {
-            let resp = client.send(&SceneColorOverlayInfoRequest {}).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&client.send(&SceneColorOverlayInfoRequest {}).await?)?;
         }
 
         Command::FaceFound => {
-            let resp = client.send(&FaceFoundRequest {}).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&client.send(&FaceFoundRequest {}).await?)?;
         }
 
         Command::Params(command) => {
@@ -110,6 +110,17 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+fn print<T: Serialize>(value: &T) -> Result<()> {
+    let string = if *JSON_COMPACT.get().unwrap_or(&false) {
+        serde_json::to_string(value)?
+    } else {
+        serde_json::to_string_pretty(value)?
+    };
+
+    println!("{}", string);
+    Ok(())
+}
+
 async fn handle_params_command(client: &mut Client, command: ParamsCommand) -> Result<()> {
     use ParamsCommand::*;
 
@@ -125,22 +136,19 @@ async fn handle_params_command(client: &mut Client, command: ParamsCommand) -> R
                 })
                 .await?;
 
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&resp)?;
         }
 
         Get { name } => {
-            let resp = client.send(&ParameterValueRequest { name }).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&client.send(&ParameterValueRequest { name }).await?)?;
         }
 
         ListLive2D => {
-            let resp = client.send(&Live2DParameterListRequest {}).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&client.send(&Live2DParameterListRequest {}).await?)?;
         }
 
         ListInputs => {
-            let resp = client.send(&InputParameterListRequest {}).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&client.send(&InputParameterListRequest {}).await?)?;
         }
 
         Delete { name } => {
@@ -150,7 +158,7 @@ async fn handle_params_command(client: &mut Client, command: ParamsCommand) -> R
                 })
                 .await?;
 
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&resp)?;
         }
 
         Inject(req) => {
@@ -164,7 +172,7 @@ async fn handle_params_command(client: &mut Client, command: ParamsCommand) -> R
                 })
                 .await?;
 
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&resp)?;
         }
     }
 
@@ -179,7 +187,7 @@ async fn handle_hotkeys_command(client: &mut Client, command: HotkeysCommand) ->
             let resp = client
                 .send(&HotkeysInCurrentModelRequest { model_id })
                 .await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&resp)?;
         }
 
         Trigger(req) => {
@@ -200,7 +208,7 @@ async fn handle_hotkeys_command(client: &mut Client, command: HotkeysCommand) ->
             };
 
             let resp = client.send(&HotkeyTriggerRequest { hotkey_id }).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&resp)?;
         }
     }
 
@@ -212,8 +220,7 @@ async fn handle_artmeshes_command(client: &mut Client, command: ArtmeshesCommand
 
     match command {
         List => {
-            let resp = client.send(&ArtMeshListRequest {}).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&client.send(&ArtMeshListRequest {}).await?)?;
         }
 
         Tint(req) => {
@@ -238,7 +245,7 @@ async fn handle_artmeshes_command(client: &mut Client, command: ArtmeshesCommand
                 })
                 .await?;
 
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&resp)?;
 
             if resp.matched_art_meshes > 0 {
                 info!(
@@ -259,13 +266,11 @@ async fn handle_models_command(client: &mut Client, command: ModelsCommand) -> R
 
     match command {
         List => {
-            let resp = client.send(&AvailableModelsRequest {}).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&client.send(&AvailableModelsRequest {}).await?)?;
         }
 
         Current => {
-            let resp = client.send(&CurrentModelRequest {}).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&client.send(&CurrentModelRequest {}).await?)?;
         }
 
         Load { id, name } => {
@@ -284,7 +289,7 @@ async fn handle_models_command(client: &mut Client, command: ModelsCommand) -> R
             };
 
             let resp = client.send(&ModelLoadRequest { model_id }).await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&resp)?;
         }
 
         Move(req) => {
@@ -298,7 +303,7 @@ async fn handle_models_command(client: &mut Client, command: ModelsCommand) -> R
                     size: req.size,
                 })
                 .await?;
-            println!("{}", serde_json::to_string_pretty(&resp)?);
+            print(&resp)?;
         }
     }
 
