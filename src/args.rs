@@ -6,6 +6,7 @@ use std::time::Duration;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug, Clone)]
+#[structopt(global_setting = structopt::clap::AppSettings::AllowNegativeNumbers)]
 pub struct Args {
     /// Overwrite path to config file.
     #[structopt(env = "VTS_CONFIG", long)]
