@@ -89,7 +89,7 @@ config show` to show the contents of the config file.
 
     VTube Studio resets artmesh tints when the plugin disconnects. Since this
     CLI program normally disconnects immediately after executing commands
-    (which would otherwise reset the tint), the `---duration` flag adds a delay
+    (which would otherwise reset the tint), the `--duration` flag adds a delay
     afterwards, to keep the tint active.
 
 * Tint artmesh (hex color)
