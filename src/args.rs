@@ -58,6 +58,9 @@ pub enum Command {
     SceneColors,
     /// Checking if face is currently found by tracker.
     FaceFound,
+    /// Actions related to expressions.
+    #[structopt(alias = "expession")]
+    Expressions(ExpressionsCommand),
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -144,6 +147,22 @@ pub enum ArtmeshesCommand {
     List,
     /// Tint matching art meshes.
     Tint(Tint),
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub enum ExpressionsCommand {
+    /// List art meshes in the current model.
+    List {
+        /// Whether to return additional details.
+        #[structopt(long)]
+        details: bool,
+        /// Return only the state of this expression file.
+        file: Option<String>,
+    },
+    /// Activate an expression.
+    Activate { file: String },
+    /// Deactivate an expression.
+    Deactivate { file: String },
 }
 
 #[derive(StructOpt, Debug, Clone)]

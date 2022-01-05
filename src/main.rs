@@ -1,8 +1,8 @@
 mod args;
 
 use crate::args::{
-    Args, ArtmeshesCommand, Command, Config, ConfigCommand, HotkeysCommand, ModelsCommand,
-    ParamsCommand,
+    Args, ArtmeshesCommand, Command, Config, ConfigCommand, ExpressionsCommand, HotkeysCommand,
+    ModelsCommand, ParamsCommand,
 };
 
 use anyhow::{bail, Context, Result};
@@ -112,6 +112,10 @@ async fn main() -> Result<()> {
 
         Command::Models(command) => {
             handle_models_command(&mut client, command).await?;
+        }
+
+        Command::Expressions(command) => {
+            handle_expressions_command(&mut client, command).await?;
         }
     };
 
@@ -327,6 +331,47 @@ async fn handle_models_command(client: &mut Client, command: ModelsCommand) -> R
                     position_y: req.y,
                     rotation: req.rotation,
                     size: req.size,
+                })
+                .await?;
+            print(&resp)?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn handle_expressions_command(
+    client: &mut Client,
+    command: ExpressionsCommand,
+) -> Result<()> {
+    use ExpressionsCommand::*;
+
+    match command {
+        List { details, file } => {
+            let resp = client
+                .send(&ExpressionStateRequest {
+                    details,
+                    expression_file: file,
+                })
+                .await?;
+            print(&resp)?;
+        }
+
+        Activate { file } => {
+            let resp = client
+                .send(&ExpressionActivationRequest {
+                    expression_file: file,
+                    active: true,
+                })
+                .await?;
+            print(&resp)?;
+        }
+
+        Deactivate { file } => {
+            let resp = client
+                .send(&ExpressionActivationRequest {
+                    expression_file: file,
+                    active: false,
                 })
                 .await?;
             print(&resp)?;
