@@ -1,6 +1,6 @@
 [package]
 name = "vtubestudio-cli"
-version = "0.3.3-alpha.0"
+version = "0.3.3"
 edition = "2021"
 license = "MIT"
 description = "CLI program for interacting with the VTube Studio API"
