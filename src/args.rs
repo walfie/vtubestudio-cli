@@ -58,6 +58,11 @@ pub enum Command {
     SceneColors,
     /// Checking if face is currently found by tracker.
     FaceFound,
+    /// Actions related to expressions.
+    #[structopt(alias = "expression")]
+    Expressions(ExpressionsCommand),
+    /// Actions related to NDI Config.
+    Ndi(NdiCommand),
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -144,6 +149,22 @@ pub enum ArtmeshesCommand {
     List,
     /// Tint matching art meshes.
     Tint(Tint),
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub enum ExpressionsCommand {
+    /// List art meshes in the current model.
+    List {
+        /// Whether to return additional details.
+        #[structopt(long)]
+        details: bool,
+        /// Return only the state of this expression file.
+        file: Option<String>,
+    },
+    /// Activate an expression.
+    Activate { file: String },
+    /// Deactivate an expression.
+    Deactivate { file: String },
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -241,4 +262,40 @@ pub struct MoveModel {
     /// Size, between -100 and 100.
     #[structopt(long)]
     pub size: Option<f64>,
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub enum NdiCommand {
+    /// Shows the current NDI config.
+    GetConfig,
+    /// Set NDI config.
+    SetConfig(NdiSetConfig),
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub struct NdiSetConfig {
+    /// Whether NDI should be active.
+    #[structopt(long, takes_value = true)]
+    pub active: Option<bool>,
+    /// Whether NDI 5 should be used.
+    #[structopt(long)]
+    pub use_ndi5: Option<bool>,
+    /// Whether a custom resolution should be used.
+    ///
+    /// Setting this to `true` means the NDI stream will no longer have
+    /// the same resolution as the VTube Studio window, but instead use
+    /// the custom resolution set via the UI or the `custom_width`
+    /// fields of this request.
+    #[structopt(long, takes_value = true)]
+    pub use_custom_resolution: Option<bool>,
+    /// Custom NDI width if `use_custom_resolution` is specified.
+    ///
+    /// Must be a multiple of 16 and be between `256` and `8192`.
+    #[structopt(long)]
+    pub width: Option<i32>,
+    /// Custom NDI height if `use_custom_resolution` is specified.
+    ///
+    /// Must be a multiple of 8 and be between `256` and `8192`.
+    #[structopt(long)]
+    pub height: Option<i32>,
 }
