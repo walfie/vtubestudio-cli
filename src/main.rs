@@ -2,7 +2,7 @@ mod args;
 
 use crate::args::{
     Args, ArtmeshesCommand, Command, Config, ConfigCommand, ExpressionsCommand, HotkeysCommand,
-    ModelsCommand, ParamsCommand,
+    ModelsCommand, NdiCommand, ParamsCommand,
 };
 
 use anyhow::{bail, Context, Result};
@@ -116,6 +116,10 @@ async fn main() -> Result<()> {
 
         Command::Expressions(command) => {
             handle_expressions_command(&mut client, command).await?;
+        }
+
+        Command::Ndi(command) => {
+            handle_ndi_command(&mut client, command).await?;
         }
     };
 
@@ -372,6 +376,39 @@ async fn handle_expressions_command(
                 .send(&ExpressionActivationRequest {
                     expression_file: file,
                     active: false,
+                })
+                .await?;
+            print(&resp)?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn handle_ndi_command(client: &mut Client, command: NdiCommand) -> Result<()> {
+    use NdiCommand::*;
+
+    match command {
+        GetConfig => {
+            let resp = client
+                .send(&NdiConfigRequest {
+                    set_new_config: false,
+                    ..NdiConfigRequest::default()
+                })
+                .await?;
+            print(&resp)?;
+        }
+
+        SetConfig(value) => {
+            dbg!(&value);
+            let resp = client
+                .send(&NdiConfigRequest {
+                    set_new_config: true,
+                    ndi_active: value.active,
+                    use_ndi5: value.use_ndi5,
+                    use_custom_resolution: value.use_custom_resolution,
+                    custom_width_ndi: value.width,
+                    custom_height_ndi: value.height,
                 })
                 .await?;
             print(&resp)?;
