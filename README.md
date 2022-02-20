@@ -146,6 +146,52 @@ config show` to show the contents of the config file.
     vts models move --relative --duration 0.5s --rotation 180
     ```
 
+### Expressions
+
+* Get expression list.
+
+    ```sh
+    vts expression list --details
+    ```
+
+* Activate expression.
+
+    ```sh
+    vts expression activate myExpression_1.exp3.json
+    ```
+
+### Physics
+
+* Get physics settings.
+
+    ```sh
+    vts physics get
+    ```
+
+* Set base physics strength (default 500ms).
+
+    ```sh
+    vts physics set base strength 50
+    ```
+
+* Set base wind strength for 3 seconds.
+
+    ```sh
+    vts physics set base wind 50 --duration 3s
+    ```
+
+* Set strength multiplier.
+
+    ```sh
+    vts physics set multiplier strength 1 --id PhysicsSetting1
+    ```
+
+* Set wind multiplier.
+
+    ```sh
+    vts physics set multiplier wind 0.5 --id PhysicsSetting1
+    ```
+
 ### Others
 
 ```sh

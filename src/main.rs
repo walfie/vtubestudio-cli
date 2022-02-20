@@ -2,7 +2,7 @@ mod args;
 
 use crate::args::{
     Args, ArtmeshesCommand, Command, Config, ConfigCommand, ExpressionsCommand, HotkeysCommand,
-    ModelsCommand, NdiCommand, ParamsCommand, PhysicsCommand, SetPhysicsCommand,
+    ModelsCommand, NdiCommand, ParamsCommand, PhysicsCommand, SetPhysicsCommand, StrengthOrWind,
 };
 
 use anyhow::{bail, Context, Result};
@@ -437,21 +437,25 @@ async fn handle_physics_command(client: &mut Client, command: PhysicsCommand) ->
             let mut physics = PhysicsOverride::default();
 
             match &mut value {
-                StrengthBase(base) | WindBase(base) => {
+                Base(base) => {
+                    physics.set_base_value = true;
                     physics.value = base.value as f64;
                     physics.override_seconds = base.duration.as_secs_f64();
                 }
-                StrengthMultiplier(mult) | WindMultiplier(mult) => {
+                Multiplier(mult) => {
                     std::mem::swap(&mut physics.id, &mut mult.id);
                     physics.value = mult.value;
                     physics.override_seconds = mult.duration.as_secs_f64();
                 }
             }
 
-            if value.is_strength() {
-                req.strength_overrides = vec![physics];
-            } else {
-                req.wind_overrides = vec![physics];
+            match value.kind() {
+                StrengthOrWind::Strength => {
+                    req.strength_overrides = vec![physics];
+                }
+                StrengthOrWind::Wind => {
+                    req.wind_overrides = vec![physics];
+                }
             }
 
             let resp = client.send(&req).await?;
