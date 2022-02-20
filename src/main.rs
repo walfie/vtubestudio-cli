@@ -2,7 +2,7 @@ mod args;
 
 use crate::args::{
     Args, ArtmeshesCommand, Command, Config, ConfigCommand, ExpressionsCommand, HotkeysCommand,
-    ModelsCommand, NdiCommand, ParamsCommand,
+    ModelsCommand, NdiCommand, ParamsCommand, PhysicsCommand, SetPhysicsCommand,
 };
 
 use anyhow::{bail, Context, Result};
@@ -120,6 +120,10 @@ async fn main() -> Result<()> {
 
         Command::Ndi(command) => {
             handle_ndi_command(&mut client, command).await?;
+        }
+
+        Command::Physics(command) => {
+            handle_physics_command(&mut client, command).await?;
         }
     };
 
@@ -400,7 +404,6 @@ async fn handle_ndi_command(client: &mut Client, command: NdiCommand) -> Result<
         }
 
         SetConfig(value) => {
-            dbg!(&value);
             let resp = client
                 .send(&NdiConfigRequest {
                     set_new_config: true,
@@ -411,6 +414,47 @@ async fn handle_ndi_command(client: &mut Client, command: NdiCommand) -> Result<
                     custom_height_ndi: value.height,
                 })
                 .await?;
+            print(&resp)?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn handle_physics_command(client: &mut Client, command: PhysicsCommand) -> Result<()> {
+    use PhysicsCommand::*;
+
+    match command {
+        Get => {
+            let resp = client.send(&GetCurrentModelPhysicsRequest {}).await?;
+            print(&resp)?;
+        }
+
+        Set(mut value) => {
+            use SetPhysicsCommand::*;
+
+            let mut req = SetCurrentModelPhysicsRequest::default();
+            let mut physics = PhysicsOverride::default();
+
+            match &mut value {
+                StrengthBase(base) | WindBase(base) => {
+                    physics.value = base.value as f64;
+                    physics.override_seconds = base.duration.as_secs_f64();
+                }
+                StrengthMultiplier(mult) | WindMultiplier(mult) => {
+                    std::mem::swap(&mut physics.id, &mut mult.id);
+                    physics.value = mult.value;
+                    physics.override_seconds = mult.duration.as_secs_f64();
+                }
+            }
+
+            if value.is_strength() {
+                req.strength_overrides = vec![physics];
+            } else {
+                req.wind_overrides = vec![physics];
+            }
+
+            let resp = client.send(&req).await?;
             print(&resp)?;
         }
     }

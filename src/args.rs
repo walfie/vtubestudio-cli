@@ -63,6 +63,8 @@ pub enum Command {
     Expressions(ExpressionsCommand),
     /// Actions related to NDI Config.
     Ndi(NdiCommand),
+    /// Actions related to physics.
+    Physics(PhysicsCommand),
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -298,4 +300,54 @@ pub struct NdiSetConfig {
     /// Must be a multiple of 8 and be between `256` and `8192`.
     #[structopt(long)]
     pub height: Option<i32>,
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub enum PhysicsCommand {
+    /// Gets physics settings of the current model.
+    Get,
+    /// Sets physics settings.
+    Set(SetPhysicsCommand),
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub enum SetPhysicsCommand {
+    /// Set the strength base value.
+    StrengthBase(SetBasePhysicsConfig),
+    /// Set the strength multiplier value.
+    StrengthMultiplier(SetMultiplierPhysicsConfig),
+    /// Set the wind base value.
+    WindBase(SetBasePhysicsConfig),
+    /// Set the wind multiplier value.
+    WindMultiplier(SetMultiplierPhysicsConfig),
+}
+
+impl SetPhysicsCommand {
+    pub fn is_strength(&self) -> bool {
+        matches!(self, Self::StrengthBase(..) | Self::StrengthMultiplier(..))
+    }
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub struct SetBasePhysicsConfig {
+    /// Base value. Should be between 0 and 100.
+    pub value: u8,
+    /// How long to override the value for.
+    ///
+    /// Should be between 0.5s and 5s.
+    #[structopt(long, default_value = "500ms", parse(try_from_str = parse_duration::parse))]
+    pub duration: Duration,
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub struct SetMultiplierPhysicsConfig {
+    /// Group ID.
+    pub id: String,
+    /// Multiplier value. Should be between 0 and 2.
+    pub value: f64,
+    /// How long to override the value for.
+    ///
+    /// Should be between 0.5s and 5s.
+    #[structopt(long, default_value = "500ms", parse(try_from_str = parse_duration::parse))]
+    pub duration: Duration,
 }
