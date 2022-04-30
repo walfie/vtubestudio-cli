@@ -202,6 +202,7 @@ async fn handle_params_command(client: &mut Client, command: ParamsCommand) -> R
         Inject(req) => {
             let resp = client
                 .send(&InjectParameterDataRequest {
+                    face_found: req.face_found,
                     parameter_values: vec![ParameterValue {
                         id: req.id,
                         value: req.value,

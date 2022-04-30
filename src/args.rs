@@ -121,6 +121,8 @@ pub struct InjectParam {
     pub value: f64,
     #[structopt(long)]
     pub weight: Option<f64>,
+    #[structopt(long)]
+    pub face_found: bool,
 }
 
 #[derive(StructOpt, Debug, Clone)]
