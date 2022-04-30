@@ -1148,9 +1148,9 @@ checksum = "5fecdca9a5291cc2b8dcf7dc02453fee791a280f3743cb0905f8822ae463b3fe"
 
 [[package]]
 name = "vtubestudio"
-version = "0.5.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e22d7d0101fe933054ebe6d819c9db8472adb9de64605c2b02966f98219aead8"
+checksum = "1e95c7709f3e11cba2bfdf4c7260bc0d81811f9085b49f2c0ca5f929646980bc"
 dependencies = [
  "displaydoc",
  "futures-core",
