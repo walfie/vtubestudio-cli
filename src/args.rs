@@ -65,6 +65,9 @@ pub enum Command {
     Ndi(NdiCommand),
     /// Actions related to physics.
     Physics(PhysicsCommand),
+    /// Actions related to items.
+    #[structopt(alias = "item")]
+    Items(ItemsCommand),
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -336,6 +339,92 @@ impl SetPhysicsCommand {
             Self::Multiplier(conf) => &conf.kind,
         }
     }
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub enum ItemsCommand {
+    /// List items.
+    List {
+        /// Include available spots.
+        #[structopt(long)]
+        spots: bool,
+        /// Include available instances.
+        #[structopt(long)]
+        instances: bool,
+        /// Include available file names.
+        #[structopt(long)]
+        files: bool,
+        /// Only include specific file name.
+        #[structopt(long)]
+        with_file_name: Option<String>,
+        /// Only include specific instance ID.
+        #[structopt(long)]
+        with_instance_id: Option<String>,
+    },
+    /// Load item into scene.
+    Load(ItemLoadCommand),
+    /// Unload item from scene.
+    Unload(ItemUnloadCommand),
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub struct ItemLoadCommand {
+    /// File name. E.g., `some_item_name.jpg`.
+    pub file_name: String,
+    /// X position.
+    #[structopt(short, default_value = "0")]
+    pub x: f64,
+    /// Y position.
+    #[structopt(short, default_value = "0")]
+    pub y: f64,
+    #[structopt(long, default_value = "0.32")]
+    pub size: f64,
+    /// Rotation, in degrees.
+    #[structopt(long, default_value = "0")]
+    pub rotation: i32,
+    /// Fade time, in seconds. Should be between `0` and `2`.
+    #[structopt(long, default_value = "0")]
+    pub fade_time: f64,
+    /// Item order. If the order is taken, VTube Studio will automatically try to find the
+    /// next available order, unless `fail_if_order_taken` is `true`.
+    #[structopt(long)]
+    pub order: Option<i32>,
+    /// Set to `true` to fail with an `ItemOrderAlreadyTaken` error if the desired `order`
+    /// is already taken.
+    #[structopt(long)]
+    pub fail_if_order_taken: bool,
+    /// Smoothing, between `0` and `1`.
+    #[structopt(long, default_value = "0")]
+    pub smoothing: f64,
+    /// Whether the item is censored.
+    #[structopt(long)]
+    pub censored: bool,
+    /// Whether the item is flipped.
+    #[structopt(long)]
+    pub flipped: bool,
+    /// Whether the item is locked.
+    #[structopt(long)]
+    pub locked: bool,
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub struct ItemUnloadCommand {
+    /// Unload all items in the scene.
+    #[structopt(long)]
+    pub all: bool,
+    /// Whether to unload all items loaded by this plugin.
+    #[structopt(long)]
+    pub from_this_plugin: bool,
+    /// Whether to allow unloading items that have been loaded by the user or other
+    /// plugins.
+    #[structopt(long)]
+    pub from_other_plugins: bool,
+    /// Request specific instance IDs to be unloaded.
+    #[structopt(long)]
+    pub id: Vec<String>,
+    /// Request specific file names to be unloaded.
+    #[structopt(long)]
+    pub file: Vec<String>,
 }
 
 #[derive(Debug, Copy, Clone)]

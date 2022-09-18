@@ -2,7 +2,8 @@ mod args;
 
 use crate::args::{
     Args, ArtmeshesCommand, Command, Config, ConfigCommand, ExpressionsCommand, HotkeysCommand,
-    ModelsCommand, NdiCommand, ParamsCommand, PhysicsCommand, SetPhysicsCommand, StrengthOrWind,
+    ItemsCommand, ModelsCommand, NdiCommand, ParamsCommand, PhysicsCommand, SetPhysicsCommand,
+    StrengthOrWind,
 };
 
 use anyhow::{bail, Context, Result};
@@ -124,6 +125,9 @@ async fn main() -> Result<()> {
 
         Command::Physics(command) => {
             handle_physics_command(&mut client, command).await?;
+        }
+        Command::Items(command) => {
+            handle_items_command(&mut client, command).await?;
         }
     };
 
@@ -479,6 +483,64 @@ async fn handle_physics_command(client: &mut Client, command: PhysicsCommand) ->
                     req.wind_overrides = vec![physics];
                 }
             }
+
+            let resp = client.send(&req).await?;
+            print(&resp)?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn handle_items_command(client: &mut Client, command: ItemsCommand) -> Result<()> {
+    use ItemsCommand::*;
+
+    match command {
+        List {
+            spots,
+            instances,
+            files,
+            with_file_name,
+            with_instance_id,
+        } => {
+            let req = ItemListRequest {
+                include_available_spots: spots,
+                include_item_instances_in_scene: instances,
+                include_available_item_files: files,
+                only_items_with_file_name: with_file_name,
+                only_items_with_instance_id: with_instance_id,
+            };
+            let resp = client.send(&req).await?;
+            print(&resp)?;
+        }
+        Load(value) => {
+            let req = ItemLoadRequest {
+                file_name: value.file_name,
+                position_x: value.x,
+                position_y: value.y,
+                size: value.size,
+                rotation: value.rotation,
+                fade_time: value.fade_time,
+                order: value.order,
+                fail_if_order_taken: value.fail_if_order_taken,
+                smoothing: value.smoothing,
+                censored: value.censored,
+                flipped: value.flipped,
+                locked: value.locked,
+                unload_when_plugin_disconnects: false,
+            };
+
+            let resp = client.send(&req).await?;
+            print(&resp)?;
+        }
+        Unload(value) => {
+            let req = ItemUnloadRequest {
+                unload_all_in_scene: value.all,
+                unload_all_loaded_by_this_plugin: value.from_this_plugin,
+                allow_unloading_items_loaded_by_user_or_other_plugins: value.from_other_plugins,
+                instance_ids: value.id,
+                file_names: value.file,
+            };
 
             let resp = client.send(&req).await?;
             print(&resp)?;
