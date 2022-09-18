@@ -545,6 +545,27 @@ async fn handle_items_command(client: &mut Client, command: ItemsCommand) -> Res
             let resp = client.send(&req).await?;
             print(&resp)?;
         }
+        Move(value) => {
+            let item = ItemToMove {
+                item_instance_id: value.id,
+                time_in_seconds: value.duration.as_secs_f64(),
+                fade_mode: value.fade_mode,
+                position_x: value.x,
+                position_y: value.y,
+                size: value.size,
+                rotation: value.rotation,
+                order: value.order,
+                set_flip: value.set_flip,
+                flip: value.flip,
+                user_can_stop: value.user_can_stop,
+            };
+            let req = ItemMoveRequest {
+                items_to_move: vec![item],
+            };
+
+            let resp = client.send(&req).await?;
+            print(&resp)?;
+        }
     }
 
     Ok(())

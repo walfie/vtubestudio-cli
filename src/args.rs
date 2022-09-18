@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Duration;
 use structopt::StructOpt;
+use vtubestudio::data::{EnumString, FadeMode};
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(global_setting = structopt::clap::AppSettings::AllowNegativeNumbers)]
@@ -365,6 +366,8 @@ pub enum ItemsCommand {
     Load(ItemLoadCommand),
     /// Unload item from scene.
     Unload(ItemUnloadCommand),
+    /// Move item.
+    Move(ItemMoveCommand),
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -426,6 +429,49 @@ pub struct ItemUnloadCommand {
     #[structopt(long)]
     pub file: Vec<String>,
 }
+
+#[derive(StructOpt, Debug, Clone)]
+pub struct ItemMoveCommand {
+    pub id: String,
+    #[structopt(long, parse(try_from_str = parse_duration::parse))]
+    pub duration: Duration,
+    #[structopt(
+        long,
+        parse(from_str = parse_fade_mode),
+        default_value = "linear",
+        possible_values = FADE_MODES
+    )]
+    pub fade_mode: EnumString<FadeMode>,
+    #[structopt(short)]
+    pub x: Option<i32>,
+    #[structopt(short)]
+    pub y: Option<i32>,
+    #[structopt(long)]
+    pub size: Option<f64>,
+    #[structopt(long)]
+    pub rotation: Option<i32>,
+    #[structopt(long)]
+    pub order: Option<i32>,
+    #[structopt(long)]
+    pub set_flip: bool,
+    #[structopt(long)]
+    pub flip: bool,
+    #[structopt(long)]
+    pub user_can_stop: bool,
+}
+
+fn parse_fade_mode(value: &str) -> EnumString<FadeMode> {
+    EnumString::<FadeMode>::new_from_str(value.to_owned())
+}
+
+const FADE_MODES: &'static [&'static str] = &[
+    "linear",
+    "easeIn",
+    "easeOut",
+    "easeBoth",
+    "overshoot",
+    "zip",
+];
 
 #[derive(Debug, Copy, Clone)]
 pub enum StrengthOrWind {
