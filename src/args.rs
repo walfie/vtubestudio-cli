@@ -368,6 +368,8 @@ pub enum ItemsCommand {
     Unload(ItemUnloadCommand),
     /// Move item.
     Move(ItemMoveCommand),
+    /// Set item animation properties.
+    Animation(ItemAnimationCommand),
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -472,6 +474,39 @@ const FADE_MODES: &'static [&'static str] = &[
     "overshoot",
     "zip",
 ];
+
+#[derive(StructOpt, Debug, Clone)]
+pub struct ItemAnimationCommand {
+    /// Item instance ID.
+    pub item_instance_id: String,
+    #[structopt(long)]
+    /// Frame rate for animated items, clamped between `0.1` and `120`.
+    pub framerate: Option<f64>,
+    /// Jump to a specific frame, zero-indexed.
+    ///
+    /// May return an error if the frame index is invalid, or if the item type does not
+    /// support animation.
+    #[structopt(long)]
+    pub frame: Option<i32>,
+    /// Brightness.
+    #[structopt(long)]
+    pub brightness: Option<f64>,
+    /// Opacity.
+    #[structopt(long)]
+    pub opacity: Option<f64>,
+    /// List of frame indices that the animation will automatically stop playing on.
+    #[structopt(long, conflicts_with = "reset-stop-frames")]
+    pub stop_frame: Vec<i32>,
+    /// Unset auto-stop-frames.
+    #[structopt(long)]
+    pub reset_stop_frames: bool,
+    /// Play the animation.
+    #[structopt(long, conflicts_with = "stop")]
+    pub play: bool,
+    /// Stop the animation.
+    #[structopt(long, conflicts_with = "play")]
+    pub stop: bool,
+}
 
 #[derive(Debug, Copy, Clone)]
 pub enum StrengthOrWind {

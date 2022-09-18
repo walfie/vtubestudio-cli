@@ -566,6 +566,29 @@ async fn handle_items_command(client: &mut Client, command: ItemsCommand) -> Res
             let resp = client.send(&req).await?;
             print(&resp)?;
         }
+        Animation(value) => {
+            let animation_play_state = value.play || !value.stop;
+            let set_auto_stop_frames = !value.stop_frame.is_empty() || value.reset_stop_frames;
+            let auto_stop_frames = if value.reset_stop_frames {
+                vec![]
+            } else {
+                value.stop_frame
+            };
+            let req = ItemAnimationControlRequest {
+                item_instance_id: value.item_instance_id,
+                framerate: value.framerate,
+                frame: value.frame,
+                brightness: value.brightness,
+                opacity: value.opacity,
+                set_auto_stop_frames,
+                auto_stop_frames,
+                set_animation_play_state: value.play || value.stop,
+                animation_play_state,
+            };
+
+            let resp = client.send(&req).await?;
+            print(&resp)?;
+        }
     }
 
     Ok(())
