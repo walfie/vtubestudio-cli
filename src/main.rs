@@ -320,6 +320,24 @@ async fn handle_artmeshes_command(client: &mut Client, command: ArtmeshesCommand
                 tokio::time::sleep(req.duration).await;
             }
         }
+
+        Select {
+            set_text,
+            set_help,
+            count,
+            preselect,
+        } => {
+            let resp = client
+                .send(&ArtMeshSelectionRequest {
+                    text_override: set_text,
+                    help_override: set_help,
+                    requested_art_mesh_count: count.unwrap_or(0),
+                    active_art_meshes: preselect,
+                })
+                .await?;
+
+            print(&resp)?;
+        }
     }
 
     Ok(())

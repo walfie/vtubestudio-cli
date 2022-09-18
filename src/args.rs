@@ -166,6 +166,20 @@ pub enum ArtmeshesCommand {
     List,
     /// Tint matching art meshes.
     Tint(Tint),
+    Select {
+        /// Text shown over the art mesh selection list.
+        #[structopt(long)]
+        set_text: Option<String>,
+        /// Text shown when the user presses the `?` button.
+        #[structopt(long)]
+        set_help: Option<String>,
+        /// Number of meshes that should be selected.
+        #[structopt(long)]
+        count: Option<i32>,
+        /// Preselect these meshes.
+        #[structopt(long)]
+        preselect: Vec<String>,
+    },
 }
 
 #[derive(StructOpt, Debug, Clone)]
