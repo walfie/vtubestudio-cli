@@ -200,9 +200,16 @@ async fn handle_params_command(client: &mut Client, command: ParamsCommand) -> R
         }
 
         Inject(req) => {
+            let mode = if req.add {
+                InjectParameterDataMode::Add
+            } else {
+                InjectParameterDataMode::Set
+            };
+
             let resp = client
                 .send(&InjectParameterDataRequest {
                     face_found: req.face_found,
+                    mode: mode.into(),
                     parameter_values: vec![ParameterValue {
                         id: req.id,
                         value: req.value,
@@ -222,9 +229,15 @@ async fn handle_hotkeys_command(client: &mut Client, command: HotkeysCommand) ->
     use HotkeysCommand::*;
 
     match command {
-        List { model_id } => {
+        List {
+            model_id,
+            live2d_file,
+        } => {
             let resp = client
-                .send(&HotkeysInCurrentModelRequest { model_id })
+                .send(&HotkeysInCurrentModelRequest {
+                    model_id,
+                    live2d_item_file_name: live2d_file,
+                })
                 .await?;
             print(&resp)?;
         }
@@ -234,7 +247,10 @@ async fn handle_hotkeys_command(client: &mut Client, command: HotkeysCommand) ->
                 id
             } else if let Some(name) = req.name {
                 let resp = client
-                    .send(&HotkeysInCurrentModelRequest { model_id: None })
+                    .send(&HotkeysInCurrentModelRequest {
+                        model_id: None,
+                        live2d_item_file_name: None,
+                    })
                     .await?;
 
                 resp.available_hotkeys
@@ -246,7 +262,12 @@ async fn handle_hotkeys_command(client: &mut Client, command: HotkeysCommand) ->
                 bail!("either `id` or `name` must be specified");
             };
 
-            let resp = client.send(&HotkeyTriggerRequest { hotkey_id }).await?;
+            let resp = client
+                .send(&HotkeyTriggerRequest {
+                    hotkey_id,
+                    item_instance_id: req.item,
+                })
+                .await?;
             print(&resp)?;
         }
     }

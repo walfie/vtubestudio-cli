@@ -123,15 +123,21 @@ pub struct InjectParam {
     pub weight: Option<f64>,
     #[structopt(long)]
     pub face_found: bool,
+    /// Whether to use `add` mode instead of `set` mode.
+    #[structopt(long)]
+    pub add: bool,
 }
 
 #[derive(StructOpt, Debug, Clone)]
 pub enum HotkeysCommand {
-    /// List the available hotkeys for a model.
+    /// List the available hotkeys for a model or Live2D item.
     List {
         /// Model ID.
         #[structopt(long)]
         model_id: Option<String>,
+        /// Live2D item file name.
+        #[structopt(long)]
+        live2d_file: Option<String>,
     },
     /// Trigger hotkey by ID or name.
     Trigger(TriggerHotkey),
@@ -145,6 +151,9 @@ pub struct TriggerHotkey {
     /// Find and trigger the first hotkey with this name, if it exists.
     #[structopt(long, conflicts_with = "id")]
     pub name: Option<String>,
+    /// Trigger hotkey for this item instance ID.
+    #[structopt(long)]
+    pub item: Option<String>,
 }
 
 #[derive(StructOpt, Debug, Clone)]
