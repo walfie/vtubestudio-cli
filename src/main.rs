@@ -2,7 +2,8 @@ mod args;
 
 use crate::args::{
     Args, ArtmeshesCommand, Command, Config, ConfigCommand, ExpressionsCommand, HotkeysCommand,
-    ModelsCommand, NdiCommand, ParamsCommand, PhysicsCommand, SetPhysicsCommand, StrengthOrWind,
+    ItemsCommand, ModelsCommand, NdiCommand, ParamsCommand, PhysicsCommand, SetPhysicsCommand,
+    StrengthOrWind,
 };
 
 use anyhow::{bail, Context, Result};
@@ -125,6 +126,9 @@ async fn main() -> Result<()> {
         Command::Physics(command) => {
             handle_physics_command(&mut client, command).await?;
         }
+        Command::Items(command) => {
+            handle_items_command(&mut client, command).await?;
+        }
     };
 
     drop(client);
@@ -200,9 +204,16 @@ async fn handle_params_command(client: &mut Client, command: ParamsCommand) -> R
         }
 
         Inject(req) => {
+            let mode = if req.add {
+                InjectParameterDataMode::Add
+            } else {
+                InjectParameterDataMode::Set
+            };
+
             let resp = client
                 .send(&InjectParameterDataRequest {
                     face_found: req.face_found,
+                    mode: Some(mode.into()),
                     parameter_values: vec![ParameterValue {
                         id: req.id,
                         value: req.value,
@@ -222,9 +233,15 @@ async fn handle_hotkeys_command(client: &mut Client, command: HotkeysCommand) ->
     use HotkeysCommand::*;
 
     match command {
-        List { model_id } => {
+        List {
+            model_id,
+            live2d_file,
+        } => {
             let resp = client
-                .send(&HotkeysInCurrentModelRequest { model_id })
+                .send(&HotkeysInCurrentModelRequest {
+                    model_id,
+                    live2d_item_file_name: live2d_file,
+                })
                 .await?;
             print(&resp)?;
         }
@@ -234,7 +251,10 @@ async fn handle_hotkeys_command(client: &mut Client, command: HotkeysCommand) ->
                 id
             } else if let Some(name) = req.name {
                 let resp = client
-                    .send(&HotkeysInCurrentModelRequest { model_id: None })
+                    .send(&HotkeysInCurrentModelRequest {
+                        model_id: None,
+                        live2d_item_file_name: None,
+                    })
                     .await?;
 
                 resp.available_hotkeys
@@ -246,7 +266,12 @@ async fn handle_hotkeys_command(client: &mut Client, command: HotkeysCommand) ->
                 bail!("either `id` or `name` must be specified");
             };
 
-            let resp = client.send(&HotkeyTriggerRequest { hotkey_id }).await?;
+            let resp = client
+                .send(&HotkeyTriggerRequest {
+                    hotkey_id,
+                    item_instance_id: req.item,
+                })
+                .await?;
             print(&resp)?;
         }
     }
@@ -294,6 +319,24 @@ async fn handle_artmeshes_command(client: &mut Client, command: ArtmeshesCommand
 
                 tokio::time::sleep(req.duration).await;
             }
+        }
+
+        Select {
+            set_text,
+            set_help,
+            count,
+            preselect,
+        } => {
+            let resp = client
+                .send(&ArtMeshSelectionRequest {
+                    text_override: set_text,
+                    help_override: set_help,
+                    requested_art_mesh_count: count.unwrap_or(0),
+                    active_art_meshes: preselect,
+                })
+                .await?;
+
+            print(&resp)?;
         }
     }
 
@@ -458,6 +501,108 @@ async fn handle_physics_command(client: &mut Client, command: PhysicsCommand) ->
                     req.wind_overrides = vec![physics];
                 }
             }
+
+            let resp = client.send(&req).await?;
+            print(&resp)?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn handle_items_command(client: &mut Client, command: ItemsCommand) -> Result<()> {
+    use ItemsCommand::*;
+
+    match command {
+        List {
+            spots,
+            instances,
+            files,
+            with_file_name,
+            with_instance_id,
+        } => {
+            let req = ItemListRequest {
+                include_available_spots: spots,
+                include_item_instances_in_scene: instances,
+                include_available_item_files: files,
+                only_items_with_file_name: with_file_name,
+                only_items_with_instance_id: with_instance_id,
+            };
+            let resp = client.send(&req).await?;
+            print(&resp)?;
+        }
+        Load(value) => {
+            let req = ItemLoadRequest {
+                file_name: value.file_name,
+                position_x: value.x,
+                position_y: value.y,
+                size: value.size,
+                rotation: value.rotation,
+                fade_time: value.fade_time,
+                order: value.order,
+                fail_if_order_taken: value.fail_if_order_taken,
+                smoothing: value.smoothing,
+                censored: value.censored,
+                flipped: value.flipped,
+                locked: value.locked,
+                unload_when_plugin_disconnects: false,
+            };
+
+            let resp = client.send(&req).await?;
+            print(&resp)?;
+        }
+        Unload(value) => {
+            let req = ItemUnloadRequest {
+                unload_all_in_scene: value.all,
+                unload_all_loaded_by_this_plugin: value.from_this_plugin,
+                allow_unloading_items_loaded_by_user_or_other_plugins: value.from_other_plugins,
+                instance_ids: value.id,
+                file_names: value.file,
+            };
+
+            let resp = client.send(&req).await?;
+            print(&resp)?;
+        }
+        Move(value) => {
+            let item = ItemToMove {
+                item_instance_id: value.id,
+                time_in_seconds: value.duration.as_secs_f64(),
+                fade_mode: value.fade_mode,
+                position_x: value.x,
+                position_y: value.y,
+                size: value.size,
+                rotation: value.rotation,
+                order: value.order,
+                set_flip: value.set_flip,
+                flip: value.flip,
+                user_can_stop: value.user_can_stop,
+            };
+            let req = ItemMoveRequest {
+                items_to_move: vec![item],
+            };
+
+            let resp = client.send(&req).await?;
+            print(&resp)?;
+        }
+        Animation(value) => {
+            let animation_play_state = value.play || !value.stop;
+            let set_auto_stop_frames = !value.stop_frame.is_empty() || value.reset_stop_frames;
+            let auto_stop_frames = if value.reset_stop_frames {
+                vec![]
+            } else {
+                value.stop_frame
+            };
+            let req = ItemAnimationControlRequest {
+                item_instance_id: value.item_instance_id,
+                framerate: value.framerate,
+                frame: value.frame,
+                brightness: value.brightness,
+                opacity: value.opacity,
+                set_auto_stop_frames,
+                auto_stop_frames,
+                set_animation_play_state: value.play || value.stop,
+                animation_play_state,
+            };
 
             let resp = client.send(&req).await?;
             print(&resp)?;

@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::Duration;
 use structopt::StructOpt;
+use vtubestudio::data::{EnumString, FadeMode};
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(global_setting = structopt::clap::AppSettings::AllowNegativeNumbers)]
@@ -65,6 +66,9 @@ pub enum Command {
     Ndi(NdiCommand),
     /// Actions related to physics.
     Physics(PhysicsCommand),
+    /// Actions related to items.
+    #[structopt(alias = "item")]
+    Items(ItemsCommand),
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -123,15 +127,21 @@ pub struct InjectParam {
     pub weight: Option<f64>,
     #[structopt(long)]
     pub face_found: bool,
+    /// Whether to use `add` mode instead of `set` mode.
+    #[structopt(long)]
+    pub add: bool,
 }
 
 #[derive(StructOpt, Debug, Clone)]
 pub enum HotkeysCommand {
-    /// List the available hotkeys for a model.
+    /// List the available hotkeys for a model or Live2D item.
     List {
         /// Model ID.
         #[structopt(long)]
         model_id: Option<String>,
+        /// Live2D item file name.
+        #[structopt(long)]
+        live2d_file: Option<String>,
     },
     /// Trigger hotkey by ID or name.
     Trigger(TriggerHotkey),
@@ -145,6 +155,9 @@ pub struct TriggerHotkey {
     /// Find and trigger the first hotkey with this name, if it exists.
     #[structopt(long, conflicts_with = "id")]
     pub name: Option<String>,
+    /// Trigger hotkey for this item instance ID.
+    #[structopt(long)]
+    pub item: Option<String>,
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -153,6 +166,20 @@ pub enum ArtmeshesCommand {
     List,
     /// Tint matching art meshes.
     Tint(Tint),
+    Select {
+        /// Text shown over the art mesh selection list.
+        #[structopt(long)]
+        set_text: Option<String>,
+        /// Text shown when the user presses the `?` button.
+        #[structopt(long)]
+        set_help: Option<String>,
+        /// Number of meshes that should be selected.
+        #[structopt(long)]
+        count: Option<i32>,
+        /// Preselect these meshes.
+        #[structopt(long)]
+        preselect: Vec<String>,
+    },
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -327,6 +354,172 @@ impl SetPhysicsCommand {
             Self::Multiplier(conf) => &conf.kind,
         }
     }
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub enum ItemsCommand {
+    /// List items.
+    List {
+        /// Include available spots.
+        #[structopt(long)]
+        spots: bool,
+        /// Include available instances.
+        #[structopt(long)]
+        instances: bool,
+        /// Include available file names.
+        #[structopt(long)]
+        files: bool,
+        /// Only include specific file name.
+        #[structopt(long)]
+        with_file_name: Option<String>,
+        /// Only include specific instance ID.
+        #[structopt(long)]
+        with_instance_id: Option<String>,
+    },
+    /// Load item into scene.
+    Load(ItemLoadCommand),
+    /// Unload item from scene.
+    Unload(ItemUnloadCommand),
+    /// Move item.
+    Move(ItemMoveCommand),
+    /// Set item animation properties.
+    Animation(ItemAnimationCommand),
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub struct ItemLoadCommand {
+    /// File name. E.g., `some_item_name.jpg`.
+    pub file_name: String,
+    /// X position.
+    #[structopt(short, default_value = "0")]
+    pub x: f64,
+    /// Y position.
+    #[structopt(short, default_value = "0")]
+    pub y: f64,
+    #[structopt(long, default_value = "0.32")]
+    pub size: f64,
+    /// Rotation, in degrees.
+    #[structopt(long, default_value = "0")]
+    pub rotation: i32,
+    /// Fade time, in seconds. Should be between `0` and `2`.
+    #[structopt(long, default_value = "0")]
+    pub fade_time: f64,
+    /// Item order. If the order is taken, VTube Studio will automatically try to find the
+    /// next available order, unless `fail_if_order_taken` is `true`.
+    #[structopt(long)]
+    pub order: Option<i32>,
+    /// Set to `true` to fail with an `ItemOrderAlreadyTaken` error if the desired `order`
+    /// is already taken.
+    #[structopt(long)]
+    pub fail_if_order_taken: bool,
+    /// Smoothing, between `0` and `1`.
+    #[structopt(long, default_value = "0")]
+    pub smoothing: f64,
+    /// Whether the item is censored.
+    #[structopt(long)]
+    pub censored: bool,
+    /// Whether the item is flipped.
+    #[structopt(long)]
+    pub flipped: bool,
+    /// Whether the item is locked.
+    #[structopt(long)]
+    pub locked: bool,
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub struct ItemUnloadCommand {
+    /// Unload all items in the scene.
+    #[structopt(long)]
+    pub all: bool,
+    /// Whether to unload all items loaded by this plugin.
+    #[structopt(long)]
+    pub from_this_plugin: bool,
+    /// Whether to allow unloading items that have been loaded by the user or other
+    /// plugins.
+    #[structopt(long)]
+    pub from_other_plugins: bool,
+    /// Request specific instance IDs to be unloaded.
+    #[structopt(long)]
+    pub id: Vec<String>,
+    /// Request specific file names to be unloaded.
+    #[structopt(long)]
+    pub file: Vec<String>,
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub struct ItemMoveCommand {
+    pub id: String,
+    #[structopt(long, parse(try_from_str = parse_duration::parse))]
+    pub duration: Duration,
+    #[structopt(
+        long,
+        parse(from_str = parse_fade_mode),
+        default_value = "linear",
+        possible_values = FADE_MODES
+    )]
+    pub fade_mode: EnumString<FadeMode>,
+    #[structopt(short)]
+    pub x: Option<i32>,
+    #[structopt(short)]
+    pub y: Option<i32>,
+    #[structopt(long)]
+    pub size: Option<f64>,
+    #[structopt(long)]
+    pub rotation: Option<i32>,
+    #[structopt(long)]
+    pub order: Option<i32>,
+    #[structopt(long)]
+    pub set_flip: bool,
+    #[structopt(long)]
+    pub flip: bool,
+    #[structopt(long)]
+    pub user_can_stop: bool,
+}
+
+fn parse_fade_mode(value: &str) -> EnumString<FadeMode> {
+    EnumString::<FadeMode>::new_from_str(value.to_owned())
+}
+
+const FADE_MODES: &'static [&'static str] = &[
+    "linear",
+    "easeIn",
+    "easeOut",
+    "easeBoth",
+    "overshoot",
+    "zip",
+];
+
+#[derive(StructOpt, Debug, Clone)]
+pub struct ItemAnimationCommand {
+    /// Item instance ID.
+    pub item_instance_id: String,
+    #[structopt(long)]
+    /// Frame rate for animated items, clamped between `0.1` and `120`.
+    pub framerate: Option<f64>,
+    /// Jump to a specific frame, zero-indexed.
+    ///
+    /// May return an error if the frame index is invalid, or if the item type does not
+    /// support animation.
+    #[structopt(long)]
+    pub frame: Option<i32>,
+    /// Brightness.
+    #[structopt(long)]
+    pub brightness: Option<f64>,
+    /// Opacity.
+    #[structopt(long)]
+    pub opacity: Option<f64>,
+    /// List of frame indices that the animation will automatically stop playing on.
+    #[structopt(long, conflicts_with = "reset-stop-frames")]
+    pub stop_frame: Vec<i32>,
+    /// Unset auto-stop-frames.
+    #[structopt(long)]
+    pub reset_stop_frames: bool,
+    /// Play the animation.
+    #[structopt(long, conflicts_with = "stop")]
+    pub play: bool,
+    /// Stop the animation.
+    #[structopt(long, conflicts_with = "play")]
+    pub stop: bool,
 }
 
 #[derive(Debug, Copy, Clone)]
