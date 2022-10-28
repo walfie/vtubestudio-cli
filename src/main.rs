@@ -633,14 +633,37 @@ async fn handle_items_command(client: &mut Client, command: ItemsCommand) -> Res
 async fn handle_events_command(client: &mut Client, command: EventsCommand) -> Result<()> {
     use EventsCommand::*;
 
-    match command {
-        Test { message } => {
-            let req = EventSubscriptionRequest::subscribe(&TestEventConfig {
-                test_message_for_event: message,
-            })?;
-            let _ = client.send(&req).await?;
+    let req = match command {
+        Test { message } => EventSubscriptionRequest::subscribe(&TestEventConfig {
+            test_message_for_event: message,
+        })?,
+
+        ModelLoaded { model_id } => {
+            EventSubscriptionRequest::subscribe(&ModelLoadedEventConfig { model_id })?
         }
-    }
+
+        TrackingStatusChanged {} => {
+            EventSubscriptionRequest::subscribe(&TrackingStatusChangedEventConfig {})?
+        }
+
+        BackgroundChanged {} => {
+            EventSubscriptionRequest::subscribe(&BackgroundChangedEventConfig {})?
+        }
+
+        ModelConfigChanged {} => {
+            EventSubscriptionRequest::subscribe(&ModelConfigChangedEventConfig {})?
+        }
+
+        ModelMoved {} => EventSubscriptionRequest::subscribe(&ModelMovedEventConfig {})?,
+
+        ModelOutline { draw } => {
+            EventSubscriptionRequest::subscribe(&ModelOutlineEventConfig { draw })?
+        }
+    };
+
+    let resp = client.send(&req).await?;
+    let resp_json = serde_json::to_string(&resp)?;
+    eprintln!("{resp_json}");
 
     Ok(())
 }

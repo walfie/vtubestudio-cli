@@ -591,5 +591,38 @@ pub struct SetMultiplierPhysicsConfig {
 
 #[derive(StructOpt, Debug, Clone)]
 pub enum EventsCommand {
-    Test { message: String },
+    /// Test events.
+    Test {
+        /// Test message.
+        message: String,
+    },
+
+    /// Model loaded.
+    ModelLoaded {
+        /// Optional model IDs to filter for.
+        #[structopt(long)]
+        model_id: Vec<String>,
+    },
+
+    /// Tracking status changed (face/hand tracking found or lost).
+    TrackingStatusChanged {},
+
+    /// Background changed.
+    BackgroundChanged {},
+
+    /// Model config changed.
+    ///
+    /// Triggered every time the user manually changes the the settings/config of the currently
+    /// loaded VTube Studio model.
+    ModelConfigChanged {},
+
+    /// Model moved.
+    ModelMoved {},
+
+    /// Model outline.
+    ModelOutline {
+        /// Whether to draw the outline.
+        #[structopt(long)]
+        draw: bool,
+    },
 }
