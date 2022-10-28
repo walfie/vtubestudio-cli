@@ -69,6 +69,15 @@ pub enum Command {
     /// Actions related to items.
     #[structopt(alias = "item")]
     Items(ItemsCommand),
+    /// Actions related to events.
+    #[structopt(alias = "event")]
+    Events(EventsCommand),
+}
+
+impl Command {
+    pub fn is_event_subscription(&self) -> bool {
+        matches!(self, Self::Events(_))
+    }
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -578,4 +587,9 @@ pub struct SetMultiplierPhysicsConfig {
     /// Should be between 0.5s and 5s.
     #[structopt(long, default_value = "500ms", parse(try_from_str = parse_duration::parse))]
     pub duration: Duration,
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub enum EventsCommand {
+    Test { message: String },
 }
