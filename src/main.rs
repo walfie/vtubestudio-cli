@@ -1,9 +1,9 @@
 mod args;
 
 use crate::args::{
-    Args, ArtmeshesCommand, Command, Config, ConfigCommand, ExpressionsCommand, HotkeysCommand,
-    ItemsCommand, ModelsCommand, NdiCommand, ParamsCommand, PhysicsCommand, SetPhysicsCommand,
-    StrengthOrWind,
+    Args, ArtmeshesCommand, Command, Config, ConfigCommand, EventsCommand, ExpressionsCommand,
+    HotkeysCommand, ItemsCommand, ModelsCommand, NdiCommand, ParamsCommand, PhysicsCommand,
+    SetPhysicsCommand, StrengthOrWind,
 };
 
 use anyhow::{bail, Context, Result};
@@ -13,14 +13,15 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 use tracing::{error, info};
 use vtubestudio::data::*;
-use vtubestudio::Client;
+use vtubestudio::{Client, ClientEvent};
 
 static JSON_COMPACT: OnceCell<bool> = OnceCell::new();
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     let args = Args::from_args();
-    let _ = JSON_COMPACT.set(args.compact);
+    let is_event_subscription = args.command.is_event_subscription();
+    let _ = JSON_COMPACT.set(args.compact || is_event_subscription);
 
     tracing_subscriber::fmt::fmt().init();
 
@@ -52,7 +53,7 @@ async fn main() -> Result<()> {
         serde_json::from_str(&json_str).context("failed to parse JSON from config file")?
     };
 
-    let (mut client, mut new_tokens) = Client::builder()
+    let (mut client, mut events) = Client::builder()
         .auth_token(conf.token.clone())
         .authentication(
             conf.plugin_name.clone(),
@@ -126,26 +127,43 @@ async fn main() -> Result<()> {
         Command::Physics(command) => {
             handle_physics_command(&mut client, command).await?;
         }
+
         Command::Items(command) => {
             handle_items_command(&mut client, command).await?;
         }
+
+        Command::Events(command) => {
+            handle_events_command(&mut client, command).await?;
+        }
     };
 
-    drop(client);
+    if !is_event_subscription {
+        drop(client);
+    }
 
-    if let Some(new_token) = new_tokens.next().await {
-        conf.token = Some(new_token);
+    while let Some(client_event) = events.next().await {
+        match client_event {
+            ClientEvent::NewAuthToken(token) => {
+                conf.token = Some(token);
 
-        let mut base_path = config_path.clone();
-        base_path.pop();
-        std::fs::create_dir_all(&base_path)
-            .with_context(|| format!("Failed to create directory {:?}", base_path))?;
+                let mut base_path = config_path.clone();
+                base_path.pop();
+                std::fs::create_dir_all(&base_path)
+                    .with_context(|| format!("Failed to create directory {:?}", base_path))?;
 
-        if let Err(e) = std::fs::write(&config_path, serde_json::to_string_pretty(&conf)?) {
-            error!(?config_path, "Failed to write config file");
-            anyhow::bail!(e);
-        } else {
-            info!(?config_path, "Wrote authentication token to config file");
+                if let Err(e) = std::fs::write(&config_path, serde_json::to_string_pretty(&conf)?) {
+                    error!(?config_path, "Failed to write config file");
+                    anyhow::bail!(e);
+                } else {
+                    info!(?config_path, "Wrote authentication token to config file");
+                }
+            }
+
+            ClientEvent::Api(event) => {
+                let _ = print(&event);
+            }
+
+            _ => {}
         }
     }
 
@@ -608,6 +626,44 @@ async fn handle_items_command(client: &mut Client, command: ItemsCommand) -> Res
             print(&resp)?;
         }
     }
+
+    Ok(())
+}
+
+async fn handle_events_command(client: &mut Client, command: EventsCommand) -> Result<()> {
+    use EventsCommand::*;
+
+    let req = match command {
+        Test { message } => EventSubscriptionRequest::subscribe(&TestEventConfig {
+            test_message_for_event: message,
+        })?,
+
+        ModelLoaded { model_id } => {
+            EventSubscriptionRequest::subscribe(&ModelLoadedEventConfig { model_id })?
+        }
+
+        TrackingStatusChanged {} => {
+            EventSubscriptionRequest::subscribe(&TrackingStatusChangedEventConfig {})?
+        }
+
+        BackgroundChanged {} => {
+            EventSubscriptionRequest::subscribe(&BackgroundChangedEventConfig {})?
+        }
+
+        ModelConfigChanged {} => {
+            EventSubscriptionRequest::subscribe(&ModelConfigChangedEventConfig {})?
+        }
+
+        ModelMoved {} => EventSubscriptionRequest::subscribe(&ModelMovedEventConfig {})?,
+
+        ModelOutline { draw } => {
+            EventSubscriptionRequest::subscribe(&ModelOutlineEventConfig { draw })?
+        }
+    };
+
+    let resp = client.send(&req).await?;
+    let resp_json = serde_json::to_string(&resp)?;
+    eprintln!("{resp_json}");
 
     Ok(())
 }

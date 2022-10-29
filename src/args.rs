@@ -69,6 +69,15 @@ pub enum Command {
     /// Actions related to items.
     #[structopt(alias = "item")]
     Items(ItemsCommand),
+    /// Actions related to events.
+    #[structopt(alias = "event")]
+    Events(EventsCommand),
+}
+
+impl Command {
+    pub fn is_event_subscription(&self) -> bool {
+        matches!(self, Self::Events(_))
+    }
 }
 
 #[derive(StructOpt, Debug, Clone)]
@@ -166,6 +175,7 @@ pub enum ArtmeshesCommand {
     List,
     /// Tint matching art meshes.
     Tint(Tint),
+    /// Trigger art mesh selection.
     Select {
         /// Text shown over the art mesh selection list.
         #[structopt(long)]
@@ -578,4 +588,42 @@ pub struct SetMultiplierPhysicsConfig {
     /// Should be between 0.5s and 5s.
     #[structopt(long, default_value = "500ms", parse(try_from_str = parse_duration::parse))]
     pub duration: Duration,
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub enum EventsCommand {
+    /// Test events.
+    Test {
+        /// Test message.
+        message: String,
+    },
+
+    /// Model loaded.
+    ModelLoaded {
+        /// Optional model IDs to filter for.
+        #[structopt(long)]
+        model_id: Vec<String>,
+    },
+
+    /// Tracking status changed (face/hand tracking found or lost).
+    TrackingStatusChanged {},
+
+    /// Background changed.
+    BackgroundChanged {},
+
+    /// Model config changed.
+    ///
+    /// Triggered every time the user manually changes the the settings/config of the currently
+    /// loaded VTube Studio model.
+    ModelConfigChanged {},
+
+    /// Model moved.
+    ModelMoved {},
+
+    /// Model outline.
+    ModelOutline {
+        /// Whether to draw the outline.
+        #[structopt(long)]
+        draw: bool,
+    },
 }
