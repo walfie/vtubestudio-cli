@@ -175,6 +175,7 @@ pub enum ArtmeshesCommand {
     List,
     /// Tint matching art meshes.
     Tint(Tint),
+    /// Trigger art mesh selection.
     Select {
         /// Text shown over the art mesh selection list.
         #[structopt(long)]
